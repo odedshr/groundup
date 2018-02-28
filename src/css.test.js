@@ -5,8 +5,8 @@ describe('css compiler', () => {
   describe('css.flattenCSS', () => {
     it('should get css file content with its imports embeded', done => {
       css.getFlatten('./tests/file1.scss')
-      .then(css => {
-        assert.equal(css, 'h2 { color: green; }\n\nh1 { color: red; }');
+      .then(output => {
+        assert.equal(output.content, 'h2 { color: green; }\n\nh1 { color: red; }');
         done();
       })
       .catch(done);
@@ -14,8 +14,8 @@ describe('css compiler', () => {
 
     it('should get handle subfolders bravely', done => {
       css.getFlatten('./tests/file2.scss')
-      .then(css => {
-        assert.equal(css, 'h4 { color: green; }\n\nh3 { color: red; }');
+      .then(output => {
+        assert.equal(output.content, 'h4 { color: green; }\n\nh3 { color: red; }');
         done();
       })
       .catch(done);

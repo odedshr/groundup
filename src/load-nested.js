@@ -16,15 +16,20 @@ const fs = require('fs'),
       throw Error('fileNotFound:' + fileName);
     }
 
-    let content = fs.readFileSync(fileName, 'utf-8'),
-        filePath = getFilePath(fileName),
-        match;
+    let files = [ fileName ],
+      content = fs.readFileSync(fileName, 'utf-8'),
+      filePath = getFilePath(fileName),
+      match;
 
     while ((match = importRegex.exec(content)) !== null) {
-      content = content.replace(match[0], loadNested(filePath + match[2], importPattern));
+      if (files.indexOf(filePath + match[2]) === -1 ) {
+        let child = loadNested(filePath + match[2], importPattern);
+        content = content.replace(match[0], child.content);
+        files = files.concat(child.files);
+      }
     }
 
-    return content;
+    return { files, content };
   };
 
 module.exports = loadNested;
