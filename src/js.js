@@ -1,31 +1,33 @@
 const webpack = require('webpack'),
-  MemoryFileSystem = require('memory-fs');
-
-const postcss = require('postcss'),
-  prefix = postcss([ require('autoprefixer') ]),
-  CleanCSS = require('clean-css'),
-  sass = data => require('node-sass').renderSync({ data }).css.toString();
+  MemoryFileSystem = require('memory-fs'),
+  babel = require('babel-core'),
+  UglifyJS = require("uglify-js");
   
   function Compiler() {}
 
   Compiler.prototype = {
     compile(fileName) {
-      this.getFlatten(fileName)
-        .then(this.sass)
-        .then(this.prefix, fileName)
-        .then(this.minify);
+      return this.getFlatten(fileName)
+        .then(fileSet => {
+          return this.transpile(fileSet.content)
+            .then(this.minify)
+            .then(transpiledAndUglified => {
+              fileSet.content = transpiledAndUglified;
+              return fileSet;
+            });
+        });
     },
 
     minify(css) {
-      return new Promise(resolve => resolve(new CleanCSS({level: 2}).minify(css).styles));
+      return new Promise((resolve, reject) => {
+        let output = UglifyJS.minify(css);
+        
+        output.error ? reject(output.error) : resolve(output.code);
+      });
     },
 
-    prefix(css, from = '') {
-      return prefix.process(css, { from }).then(prefixed => prefixed.css);
-    },
-
-    sass(scss) {
-      return new Promise(resolve => resolve(sass(scss)));
+    transpile(escode, minified = false) {
+      return new Promise(resolve => resolve(babel.transform(escode, { presets: ['env'], minified }).code));
     },
 
     getFlatten(fileName) {

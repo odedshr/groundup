@@ -10,6 +10,17 @@ const fs = require('fs'),
   },
 
   loadNested = (fileName, importPattern) => {
+    let files = Array.isArray(fileName) ? fileName : [ fileName ];
+
+    return files.map(file => loadSingleNested(file, importPattern))
+      .reduce((acc, item) => {
+        acc.files = acc.files.concat(item.files);
+        acc.content += item.content;
+        return acc;
+      }, { files: [], content: ''});
+  },
+
+  loadSingleNested = (fileName, importPattern) => {
     const importRegex = new RegExp(importPattern,'mg');
 
     if (!fs.existsSync(fileName)) {

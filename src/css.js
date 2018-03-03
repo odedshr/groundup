@@ -9,10 +9,16 @@ const loadNested = require('./load-nested.js'),
 
   Compiler.prototype = {
     compile(fileName) {
-      this.getFlatten(fileName)
-        .then(this.sass)
-        .then(this.prefix, fileName)
-        .then(this.minify);
+      return this.getFlatten(fileName)
+      .then(fileSet => {
+        return this.sass(fileSet.content)
+          .then(this.prefix, Array.isArray(fileName) ? fileName[0]: fileName)
+          .then(this.minify)
+          .then(compiledAndMinified => {
+            fileSet.content = compiledAndMinified;
+            return fileSet;
+          });
+      });
     },
 
     minify(css) {

@@ -23,7 +23,7 @@ describe('css compiler', () => {
   });
 
   describe('css.sass', () => {
-    it('should should resolve nesting', done => {
+    it('should resolve nesting', done => {
       css.sass('body{ color: red; div { color: blue}}')
       .then(css => {
         assert.equal(css, 'body {\n  color: red; }\n  body div {\n    color: blue; }\n');
@@ -32,7 +32,7 @@ describe('css compiler', () => {
       .catch(done);
     });
 
-    it('should should resolve variables', done => {
+    it('should resolve variables', done => {
       css.sass('$red: red; body{ color: $red;}')
       .then(css => {
         assert.equal(css, 'body {\n  color: red; }\n');
@@ -70,6 +70,17 @@ describe('css compiler', () => {
           done();
         })
         .catch(done);
+    });
+  });
+
+  describe('css.compile', () => {
+    it('should compile, prefix and minify a file', done => {
+      css.compile('./tests/file1.scss')
+      .then(output => {
+        assert.equal(output.content, 'h2{color:green}h1{color:red}');
+        done();
+      })
+      .catch(done);
     });
   });
 });

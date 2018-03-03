@@ -1,23 +1,29 @@
 {
   "name": "foundations",
   "version": "1.0.0",
-  "description": "Backgroud scripts and tools for my apps",
+  "description": "Background scripts and tools for my apps",
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha src/*.test.js"
   },
   "author": "Oded Sharon",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/odedshr/foundations.git"
+  },
   "devDependencies": {
     "autoprefixer": "^8.0.0",
     "babel-core": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "clean-css": "^4.1.9",
+    "glob": "^7.1.2",
     "html-minifier": "^3.5.9",
     "memory-fs": "^0.4.1",
     "mocha": "^5.0.1",
     "node-sass": "^4.7.2",
     "postcss": "^6.0.19",
+    "uglify-js": "^3.3.12",
     "webpack": "^4.0.1"
   }
 }

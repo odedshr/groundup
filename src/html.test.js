@@ -42,4 +42,15 @@ describe('html compiler', () => {
         .catch(done);
     });
   });
+
+  describe('html.compile', () => {
+    it('should compile, minify a file', done => {
+    html.compile('./tests/file1.html')
+      .then(output => {
+        assert.equal(output.content, '<html>\n<head>\n<style>body{color:red}</style>\n</head>\n</html>');
+        done();
+      })
+      .catch(done);
+    });
+  });
 });
