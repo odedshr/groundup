@@ -1,0 +1,12 @@
+{
+  "target": "tests/dist",
+  "entries": {
+    "entry.html": ["file1.html"],
+    "main.js": ["file1.js"],
+    "main.css": ["file1.scss", "file2.scss"],
+    "serviceWorker.js": ["serviceWorker.js"],
+    "webWorker.js": ["webWorker.js"],
+    "static/": ["static/*"]
+  }
+}
+
