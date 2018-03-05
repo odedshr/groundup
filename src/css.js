@@ -1,4 +1,4 @@
-const loadNested = require('./load-nested.js'),
+const mapNested = require('./map-nested.js'),
   postcss = require('postcss'),
   prefix = postcss([ require('autoprefixer') ]),
   CleanCSS = require('clean-css'),
@@ -9,15 +9,19 @@ const loadNested = require('./load-nested.js'),
 
   Compiler.prototype = {
     compile(fileName) {
-      return this.getFlatten(fileName)
+      return this.loadFile(fileName)
       .then(fileSet => {
+        if(fileSet.content.length === 0) {
+          return fileSet;
+        }
+
         return this.sass(fileSet.content)
-          .then(this.prefix, Array.isArray(fileName) ? fileName[0]: fileName)
-          .then(this.minify)
-          .then(compiledAndMinified => {
-            fileSet.content = compiledAndMinified;
-            return fileSet;
-          });
+        .then(this.prefix, Array.isArray(fileName) ? fileName[0]: fileName)
+        .then(this.minify)
+        .then(compiledAndMinified => {
+          fileSet.content = compiledAndMinified;
+          return fileSet;
+        });
       });
     },
 
@@ -33,8 +37,12 @@ const loadNested = require('./load-nested.js'),
       return new Promise(resolve => resolve(sass(scss)));
     },
 
-    getFlatten(fileName) {
-      return new Promise(resolve => resolve(loadNested(fileName, importPattern)));
+    mapFile(fileName) {
+      return new Promise(resolve => resolve(mapNested(fileName, importPattern)));
+    },
+
+    loadFile(fileName) {
+      return new Promise(resolve => resolve(mapNested.load(fileName, importPattern)));
     }
   };
 

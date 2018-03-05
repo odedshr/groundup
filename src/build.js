@@ -6,24 +6,44 @@ const fs = require('fs'),
   
   log = console.log,
 
-  types = [{ regExp: /\.js$/, id: 'js', compiler: js.compile },
-    { regExp: /\.css$/, id: 'css', compiler: css.compile },
-    { regExp: /\.html$/,id: 'html', compiler: html.compile },
-    { regExp: /\/$/, id: 'static', compiler: static.copy }];
+  types = [{ regExp: /\.js$/, id: 'js', handler: js },
+    { regExp: /\.css$/, id: 'css', handler: css },
+    { regExp: /\.html$/,id: 'html', handler: html },
+    { regExp: /\/$/, id: 'static', handler: static }];
 
 function Builder () {}
 
 Builder.prototype = {
   once(appMap) {
-    let target = appMap.target || '';
+    let source = appMap.source || '',
+        target = appMap.target || '';
 
-    Object.keys(appMap.entries).forEach(entry => {
-      try {
-        this.writeToFile(target, entry, appMap.entries, this.getFileType(entry));
-      }
-      catch(err) {
-        log('Skippin entry for producing the following entry: ', err);
-      }
+    return Promise.all(Object.keys(appMap.entries)
+      .map(entry => this.writeToFile(
+          target,
+          entry,
+          appMap.entries[entry].map(file => this.buildPath(source, file)),
+          this.getFileType(entry))
+        .catch(err => log('skipping entering due to error:', err))));
+  },
+
+  live(appMap) {
+    let source = appMap.source || '',
+        target = appMap.target || '';
+    
+    return new Promise(resolve => {
+      Object.keys(appMap.entries).map(entry => {
+        this.getFileType(entry)
+          .handler
+          .mapFile(this.buildPath(source, appMap.entries[entry]))
+          .then(results => results.map(file => fs.watch(file, () => this.writeToFile(
+              target,
+              entry,
+              appMap.entries[entry].map(file => this.buildPath(source, file)),
+              this.getFileType(entry))
+            .then( () => log (`recompiled ${entry}`)))));
+      });
+      resolve();
     });
   },
 
@@ -37,7 +57,7 @@ Builder.prototype = {
     throw new Error('UnknownFileType:' + fileName);
   },
 
-  getEntryTarget(folder, file) {
+  buildPath(folder, file) {
     if (folder.length > 0 && !folder.match(/\/$/)) {
       folder += '/';
     }
@@ -46,9 +66,11 @@ Builder.prototype = {
 
   writeToFile(target, entry, entries, fileTypeDef) {
     if (fileTypeDef.id === 'static') {
-      static.copy(entries[entry], this.getEntryTarget(target, entry));
+      return static.copy(entries, this.buildPath(target, entry));
     } else {
-      fs.writeFileSync(this.getEntryTarget(target, entry), fileTypeDef.compiler(entries[entry]));
+      return fileTypeDef.handler.compile(entries).then(response => {
+        fs.writeFileSync(this.buildPath(target, entry), response.content);
+      });
     }
   }
 };

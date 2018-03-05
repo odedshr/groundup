@@ -5,21 +5,22 @@ function Static () {}
 
 Static.prototype = {
   copy(source, target) {
-    let fileTarget,
-        sources = Array.isArray(source) ? source : [source];
+    let sources = Array.isArray(source) ? source : [source];
 
     this.validatePathExists(target.substring(0, target.lastIndexOf('/')));
-    sources.forEach( source => {
+    return Promise.all(sources.map(source => {
       glob.sync(source, {})
         .forEach(file => {
-          fileTarget = this.getFileTargt(file, target);
-          fs.copyFileSync(file, fileTarget);
+          let fileTarget = this.getFileTargt(file, target),
+            err = fs.copyFileSync(file, fileTarget);
 
-          if (fs.lstatSync(target).isDirectory()) {
-            this.copy(file + '/*.*', fileTarget + '/');
+          if (!fs.lstatSync(target).isDirectory() || err) {
+            return new Promise((resolve, reject) => (err ? reject(err): resolve()));
+          } else {
+            return this.copy(file + '/*.*', fileTarget + '/');
           }
         });
-    });
+    }));
   },
 
   getFileTargt(file, target) {
@@ -56,7 +57,12 @@ Static.prototype = {
         });
       fs.rmdirSync(path);
     }
-  }
+  },
+
+  mapFile(fileName) {
+    console.log('static.mapFile', fileName);
+    return new Promise(resolve => resolve(glob.sync(fileName, {})));
+  },
 };
 
 module.exports = new Static();

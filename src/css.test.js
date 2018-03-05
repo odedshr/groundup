@@ -2,9 +2,20 @@ const assert = require('assert'),
   css = require('./css.js');
 
 describe('css compiler', () => {
-  describe('css.flattenCSS', () => {
+  describe('css.mapFile', () => {
+    it('should get map file and its dependencies', done => {
+      css.mapFile('./tests/file2.scss')
+      .then(output => {
+        assert.equal(JSON.stringify(output), '["./tests/file2.scss","./tests/subfolder/file2.1.scss"]');
+        done();
+      })
+      .catch(done);
+    });
+  });
+
+  describe('css.loadFile', () => {
     it('should get css file content with its imports embeded', done => {
-      css.getFlatten('./tests/file1.scss')
+      css.loadFile('./tests/file1.scss')
       .then(output => {
         assert.equal(output.content, 'h2 { color: green; }\n\nh1 { color: red; }');
         done();
@@ -13,7 +24,7 @@ describe('css compiler', () => {
     });
 
     it('should get handle subfolders bravely', done => {
-      css.getFlatten('./tests/file2.scss')
+      css.loadFile('./tests/file2.scss')
       .then(output => {
         assert.equal(output.content, 'h4 { color: green; }\n\nh3 { color: red; }');
         done();

@@ -27,25 +27,52 @@ describe('build.js', () => {
     });
   });
 
-  describe('getEntryTarget()', () => {
+  describe('buildPath()', () => {
     it('should concatanate no folder and file start with \'/\'', () => {
-      assert.equal(build.getEntryTarget('', '/file'), '/file');
+      assert.equal(build.buildPath('', '/file'), '/file');
     });
 
     it('should concatanate folder and file start with \'/\'', () => {
-      assert.equal(build.getEntryTarget('folder', '/file'), 'folder/file');
+      assert.equal(build.buildPath('folder', '/file'), 'folder/file');
     });
 
     it('should concatanate folder and file start with \'/\'', () => {
-      assert.equal(build.getEntryTarget('folder/', '/file'), 'folder/file');
+      assert.equal(build.buildPath('folder/', '/file'), 'folder/file');
     });
   });
 
-  xdescribe('once()', () => {
+  describe('once()', () => {
     it('should build a dist', done => {
       let appMap = JSON.parse(fs.readFileSync('./tests/app.map.json', 'utf-8'));
-      build.once(appMap);
-      done();
+
+      build.once(appMap).then(() => {
+        assert.equal(JSON.stringify(fs.readdirSync(appMap.target)), 
+          JSON.stringify([ 'entry.html',
+            'main.css',
+            'main.js',
+            'serviceWorker.js',
+            'static',
+            'webWorker.js' ]));
+        done();
+      });
+    });
+  });
+
+  describe('live()', () => {
+    it('should update build after an update', done => {
+      let appMap = JSON.parse(fs.readFileSync('./tests/app.map.json', 'utf-8'));
+
+      build.live(appMap).then(() => {
+        fs.writeFileSync('./tests/subfolder/timestamp.txt',(new Date()).getTime());
+        assert.equal(JSON.stringify(fs.readdirSync(appMap.target)), 
+          JSON.stringify([ 'entry.html',
+            'main.css',
+            'main.js',
+            'serviceWorker.js',
+            'static',
+            'webWorker.js' ]));
+        done();
+      });
     });
   });
 });

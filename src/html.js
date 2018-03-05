@@ -1,16 +1,20 @@
-const loadNested = require('./load-nested.js'),
-  minify = require('html-minifier').minify,
+const minify = require('html-minifier').minify,
+  mapNested = require('./map-nested.js'),
   importPattern = '<link rel="import" href=(["\'])(.*\.html)\\1 data-replace="true"\\s*\\/>';
   
   function Compiler() {}
 
   Compiler.prototype = {
     compile(fileName) {
-      return this.getFlatten(fileName)
+      return this.loadFile(fileName)
       .then(fileSet => {
+        if(fileSet.content.length === 0) {
+          return fileSet;
+        }
+
         return this.minify(fileSet.content)
-          .then(transpiledAndUglified => {
-            fileSet.content = transpiledAndUglified;
+          .then(minified => {
+            fileSet.content = minified;
             return fileSet;
           });
       });
@@ -39,8 +43,12 @@ const loadNested = require('./load-nested.js'),
       })));
     },
 
-    getFlatten(fileName) {
-      return new Promise(resolve => resolve(loadNested(fileName, importPattern)));
+    mapFile(fileName) {
+      return new Promise(resolve => resolve(mapNested(fileName, importPattern)));
+    },
+
+    loadFile(fileName) {
+      return new Promise(resolve => resolve(mapNested.load(fileName, importPattern)));
     }
   };
 

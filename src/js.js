@@ -1,14 +1,20 @@
 const webpack = require('webpack'),
   MemoryFileSystem = require('memory-fs'),
   babel = require('babel-core'),
-  UglifyJS = require("uglify-js");
+  UglifyJS = require('uglify-js'),
+  mapNested = require('./map-nested.js'),
+  importPattern = 'require\\((["\'])(.*\\.js)\\1\\)';
   
   function Compiler() {}
 
   Compiler.prototype = {
     compile(fileName) {
-      return this.getFlatten(fileName)
+      return this.loadFile(fileName)
         .then(fileSet => {
+          if(fileSet.content.length === 0) {
+            return fileSet;
+          }
+
           return this.transpile(fileSet.content)
             .then(this.minify)
             .then(transpiledAndUglified => {
@@ -30,7 +36,11 @@ const webpack = require('webpack'),
       return new Promise(resolve => resolve(babel.transform(escode, { presets: ['env'], minified }).code));
     },
 
-    getFlatten(fileName) {
+    mapFile(fileName) {
+      return new Promise(resolve => resolve(mapNested(fileName, importPattern)));
+    },
+    
+    loadFile(fileName) {
       let filename = 'output.js',
         compiler = webpack({
           entry: fileName,
@@ -48,7 +58,7 @@ const webpack = require('webpack'),
         
         resolve({
           files: stats.toJson().modules.map(module => module.identifier),
-          content: memFs.readFileSync(outputPath, 'utf-8')
+          content: memFs.existsSync(outputPath) ? memFs.readFileSync(outputPath, 'utf-8') : ''
         });
       }));
     }
