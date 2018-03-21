@@ -60,7 +60,6 @@ Static.prototype = {
   },
 
   mapFile(fileName) {
-    console.log('static.mapFile', fileName);
     return new Promise(resolve => resolve(glob.sync(fileName, {})));
   },
 };
