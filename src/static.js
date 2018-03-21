@@ -1,17 +1,36 @@
 const fs = require('fs'),
   glob = require('glob');
 
+function getFileTargt(file, target) {
+  if (target.match(/\/$/)) {
+    target += file.substr(file.lastIndexOf('/') + 1);
+  }
+
+  return target;
+}
+
+function validatePathExists(path) {
+  path.split('/').reduce((acc, folder) => {
+    acc += folder;
+    if (!fs.existsSync(acc)) {
+      fs.mkdirSync(acc);
+    }
+    return acc + '/';
+  }, '');
+}
+
 function Static () {}
 
 Static.prototype = {
   copy(source, target) {
     let sources = Array.isArray(source) ? source : [source];
 
-    this.validatePathExists(target.substring(0, target.lastIndexOf('/')));
+    validatePathExists(target.substring(0, target.lastIndexOf('/')));
+
     return Promise.all(sources.map(source => {
       glob.sync(source, {})
         .forEach(file => {
-          let fileTarget = this.getFileTargt(file, target),
+          let fileTarget = getFileTargt(file, target),
             err = fs.copyFileSync(file, fileTarget);
 
           if (!fs.lstatSync(target).isDirectory() || err) {
@@ -21,24 +40,6 @@ Static.prototype = {
           }
         });
     }));
-  },
-
-  getFileTargt(file, target) {
-    if (target.match(/\/$/)) {
-      target += file.substr(file.lastIndexOf('/') + 1);
-    }
-
-    return target;
-  },
-
-  validatePathExists(path) {
-    path.split('/').reduce((acc, folder) => {
-      acc += folder;
-      if (!fs.existsSync(acc)) {
-        fs.mkdirSync(acc);
-      }
-      return acc + '/';
-    }, '');
   },
 
   removeFolder(path) {
