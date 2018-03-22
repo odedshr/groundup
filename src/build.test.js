@@ -7,39 +7,39 @@ const assert = require('assert'),
   
 
 describe('build.js', () => {
-  describe('getFileType()', () => {
+  describe('_getFileType()', () => {
     it('should detect js files', () => {
-      assert.equal(build.getFileType('index.js').id, 'js');
+      assert.equal(build._getFileType('index.js').id, 'js');
     });
 
     it('should detect css files', () => {
-      assert.equal(build.getFileType('index.css').id, 'css');
+      assert.equal(build._getFileType('index.css').id, 'css');
     });
 
     it('should detect html files', () => {
-      assert.equal(build.getFileType('index.html').id, 'html');
+      assert.equal(build._getFileType('index.html').id, 'html');
     });
 
     it('should detect folders', () => {
-      assert.equal(build.getFileType('folder/').id, 'static');
+      assert.equal(build._getFileType('folder/').id, 'static');
     });
 
     it('should treat unknown type as static', () => {
-      assert.equal(build.getFileType('unknown.type').id, 'static');
+      assert.equal(build._getFileType('unknown.type').id, 'static');
     });
   });
 
-  describe('buildPath()', () => {
+  describe('_buildPath()', () => {
     it('should concatanate no folder and file start with \'/\'', () => {
-      assert.equal(build.buildPath('', '/file'), '/file');
+      assert.equal(build._buildPath('', '/file'), '/file');
     });
 
     it('should concatanate folder and file start with \'/\'', () => {
-      assert.equal(build.buildPath('folder', '/file'), 'folder/file');
+      assert.equal(build._buildPath('folder', '/file'), 'folder/file');
     });
 
     it('should concatanate folder and file start with \'/\'', () => {
-      assert.equal(build.buildPath('folder/', '/file'), 'folder/file');
+      assert.equal(build._buildPath('folder/', '/file'), 'folder/file');
     });
   });
 
@@ -52,7 +52,6 @@ describe('build.js', () => {
           JSON.stringify([ 'entry.html',
             'main.css',
             'main.js',
-            'serviceWorker.js',
             'static',
             'webWorker.js' ]));
         done();
