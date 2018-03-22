@@ -1,4 +1,4 @@
-# foundations
+# GroundUp
 Backgroud scripts and tools for my apps
 
 ## CSS
@@ -62,3 +62,10 @@ For example:
 
 ### once(fileMap) => Promise that fileMap was processed
 ### live(fileMap) => [ WatchesArray ]
+
+### CLI
+## node ./src/build-cli.js app.map.json
+will build the project once
+
+## node ./src/build-cli.js app.map.json --live
+will keep watching the files for changes

@@ -1,5 +1,5 @@
 {
-  "name": "foundations",
+  "name": "groundup",
   "version": "1.0.0",
   "description": "Background scripts and tools for my apps",
   "main": "index.js",
@@ -10,7 +10,7 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/odedshr/foundations.git"
+    "url": "git+https://github.com/odedshr/groundup.git"
   },
   "devDependencies": {
     "autoprefixer": "^8.0.0",
