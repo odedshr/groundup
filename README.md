@@ -1,6 +1,45 @@
 # GroundUp
 Backgroud scripts and tools for my apps
 
+## Installation
+Install with npm:
+```
+  npm install groundup --save-dev
+```
+the `--save-dev` argument is optional, but as GroundUp is meant only to provide build-tools there's no reason to
+include it in the general dependecies list.
+
+### Usage
+Run with node:
+```
+  node ./src/build-cli.js [applicationMap] [--live]
+```
+
+- `--live` (optional)
+## The application map
+The application map is the set of instructions for the builder:
+```
+{
+  "source": "src/",
+  "target": "dist/",
+  "entries": {
+    "index.html": ["file1.html"],
+    "main.js": ["file1.js", "tools.js"],
+    "main.css": ["file1.scss", "file2.scss"],
+    "webWorker.js": ["web-worker.js", "tools.js"],
+    "static/": ["subfolder/"]
+  }
+}
+```
+- `source` serves as the baseline folder from which files should be copied
+- `target` serves as a baseline folder in which entries should be created
+- `entries` is a map of target files (html, css, js or files and folders that should be copied as-is) and sources
+
+## node ./src/build-cli.js app.map.json
+will build the project once
+
+## node ./src/build-cli.js app.map.json --live
+will keep watching the files for changes
 ## CSS
 ### minify(css) => minifiedCssString
 ### prefix(css, fileName) => cssWithVendorPrefixesString
@@ -56,16 +95,7 @@ For example:
   }
 }
 
-- 'source' serves as the baseline folder from which files should be copied
-- 'target' serves as a baseline folder in which entries should be created
-- 'entries' is a map of target files (html, css, js or files and folders that should be copied as-is) and sources
+
 
 ### once(fileMap) => Promise that fileMap was processed
 ### live(fileMap) => [ WatchesArray ]
-
-### CLI
-## node ./src/build-cli.js app.map.json
-will build the project once
-
-## node ./src/build-cli.js app.map.json --live
-will keep watching the files for changes
