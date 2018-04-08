@@ -1,6 +1,6 @@
 {
   "name": "groundup",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Background scripts and tools for my apps",
   "main": "builder.js",
   "scripts": {
