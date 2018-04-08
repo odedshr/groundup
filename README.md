@@ -12,10 +12,14 @@ include it in the general dependecies list.
 ### Usage
 Run with node:
 ```
-  node ./src/build-cli.js [applicationMap] [--live]
+  node ./builder.js [applicationMap] [--live [--build-now]]
 ```
+If no parameters given, builder will build target files once and quit.
 
-- `--live` (optional)
+- `--live` (optional) would keep the builder running and watching for changes in source files
+
+- `--build-now` (optional, relevant only in `--live` mode) will build the target files and start watching source files
+
 ## The application map
 The application map is the set of instructions for the builder:
 ```
@@ -35,10 +39,10 @@ The application map is the set of instructions for the builder:
 - `target` serves as a baseline folder in which entries should be created
 - `entries` is a map of target files (html, css, js or files and folders that should be copied as-is) and sources
 
-## node ./src/build-cli.js app.map.json
+## node ./builder.js app.map.json
 will build the project once
 
-## node ./src/build-cli.js app.map.json --live
+## node ./builder.js app.map.json --live
 will keep watching the files for changes
 ## CSS
 ### minify(css) => minifiedCssString
