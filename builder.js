@@ -1,5 +1,5 @@
-const { once, live } = require('./src/build.js'),
-  colors = require('./src/console-colors.js'),  
+const { once, live } = require('./src/builder/build.js'),
+  colors = require('./src/etc/console-colors.js'),  
   fs = require('fs'),
   stdin = process.stdin;
 

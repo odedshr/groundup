@@ -4,7 +4,7 @@
   "description": "Background scripts and tools for my apps",
   "main": "builder.js",
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha src/*.test.js"
+    "test": "./node_modules/mocha/bin/mocha src/**/*.test.js"
   },
   "author": "Oded Sharon",
   "license": "ISC",

@@ -61,7 +61,9 @@ Static.prototype = {
   _validatePathExists(path) {
     path.split('/').reduce((acc, folder) => {
       acc += folder;
-      if (!fs.existsSync(acc)) {
+
+      // when path is absolute ('/Volumes...') the first acc ==='' so we shouldn't try to create it
+      if (acc.length && !fs.existsSync(acc)) {
         fs.mkdirSync(acc);
       }
       return acc + '/';

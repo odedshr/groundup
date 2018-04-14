@@ -7,42 +7,6 @@ const assert = require('assert'),
   
 
 describe('build.js', () => {
-  describe('_getFileType()', () => {
-    it('should detect js files', () => {
-      assert.equal(build._getFileType('index.js').id, 'js');
-    });
-
-    it('should detect css files', () => {
-      assert.equal(build._getFileType('index.css').id, 'css');
-    });
-
-    it('should detect html files', () => {
-      assert.equal(build._getFileType('index.html').id, 'html');
-    });
-
-    it('should detect folders', () => {
-      assert.equal(build._getFileType('folder/').id, 'static');
-    });
-
-    it('should treat unknown type as static', () => {
-      assert.equal(build._getFileType('unknown.type').id, 'static');
-    });
-  });
-
-  describe('_buildPath()', () => {
-    it('should concatanate no folder and file start with \'/\'', () => {
-      assert.equal(build._buildPath('', '/file'), '/file');
-    });
-
-    it('should concatanate folder and file start with \'/\'', () => {
-      assert.equal(build._buildPath('folder', '/file'), 'folder/file');
-    });
-
-    it('should concatanate folder and file start with \'/\'', () => {
-      assert.equal(build._buildPath('folder/', '/file'), 'folder/file');
-    });
-  });
-
   describe('once()', () => {
     it('should build a dist', done => {
       let appMap = JSON.parse(fs.readFileSync('./tests/app.map.json', 'utf-8'));
@@ -76,8 +40,9 @@ describe('build.js', () => {
         
         promiseTimeOut(1000)
           .then(() =>{
-            assert.equal(fs.existsSync(staticTestTarget), true);
+            assert.equal(fs.existsSync(process.cwd() + '/' + staticTestTarget), true);
           })
+          .catch(err => console.log(err))
           .then(done);
       }).catch(err => done(err));
     });

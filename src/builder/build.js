@@ -1,5 +1,6 @@
 const fs = require('fs'),
-  colors = require('./console-colors.js'),
+  errors = require('../etc/errors.js'),
+  colors = require('../etc/console-colors.js'),
   css = require('./css.js'),
   html = require('./html.js'),
   js = require('./js.js'),
@@ -19,8 +20,8 @@ function logged(label, method) {
 }
 
 function readMapFile(fileName) {
-  if (!fs.existsSync) {
-    throw new Error('File not found:' + fileName);
+  if (!fs.existsSync(fileName)) {
+    throw errors.notFound('map.json', fileName);
   }
 
   return JSON.parse(fs.readFileSync(fileName, 'utf-8'));
@@ -30,7 +31,7 @@ function buildPath(path, file) {
   if (path.length > 0 && !path.match(/\/$/)) {
     path += '/';
   }
-  return (path + file).replace('//', '/');
+  return `${process.cwd()}/${(path + file).replace('//', '/')}`;
 }
 
 function buildPaths(path, entries) {
@@ -97,7 +98,7 @@ function removeFileIfRedundant(file, entries, target) {
       return fs.existsSync(`${entry}${file}`);
     }
     return false;
-  })) {
+  }) && fs.existsSync(`${target}/${file}`)) {
     fs.unlinkSync(`${target}/${file}`);
   }
 }
@@ -112,7 +113,7 @@ function once(appMap) {
         entry,
         appMap.entries[entry].map(file => buildPath(source, file)),
         getFileType(entry))
-      .catch(err => log('skipping entering due to error:', err))));
+      .catch(err => log(`skipping ${entry} due to error:`, err))));
 }
 
 function live(appMap) {
@@ -128,24 +129,14 @@ function live(appMap) {
   ).then(watcheArrays => watcheArrays.reduce((acc, watches) => acc.concat(watches), []));
 }
 
-function Builder () {}
-
-Builder.prototype = {
+class Builder {
   once(appMap) {
     return once((typeof appMap === 'string') ? readMapFile(appMap) : appMap);
-  },
+  }
 
   live(appMap) {
     return live((typeof appMap === 'string') ? readMapFile(appMap) : appMap);
-  },
-
-  _buildPath(path, file) {
-    return buildPath(path, file);
-  },
-
-  _getFileType(fileName) {
-    return getFileType(fileName);
   }
-};
+}
 
 module.exports = new Builder();
