@@ -9,7 +9,7 @@ const assert = require('assert'),
 describe('build.js', () => {
   describe('once()', () => {
     it('should build a dist', done => {
-      let appMap = JSON.parse(fs.readFileSync('./tests/app.map.json', 'utf-8'));
+      let appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8'));
 
       build.once(appMap).then(() => {
         assert.equal(JSON.stringify(fs.readdirSync(appMap.target)), 
@@ -18,15 +18,16 @@ describe('build.js', () => {
             'main.js',
             'static',
             'webWorker.js' ]));
-        done();
-      });
+      })
+      .catch (res => res)
+      .then(done);
     });
   });
 
   describe('live():static', () => {
     let staticTestTarget = './tests/dist/static/timestamp.txt',
-        appMap = JSON.parse(fs.readFileSync('./tests/app.map.json', 'utf-8')),
-        staticTestSource = './tests/subfolder/timestamp.txt',
+        appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8')),
+        staticTestSource = './tests/resources/subfolder/timestamp.txt',
         watches = [];
 
         if (fs.existsSync(staticTestTarget)) {
@@ -38,13 +39,13 @@ describe('build.js', () => {
         watches = newWatches;
         fs.writeFileSync(staticTestSource,(new Date()).getTime());
         
-        promiseTimeOut(1000)
+        return promiseTimeOut(1000)
           .then(() =>{
             assert.equal(fs.existsSync(process.cwd() + '/' + staticTestTarget), true);
-          })
-          .catch(err => console.log(err))
-          .then(done);
-      }).catch(err => done(err));
+          });
+      })
+      .catch (res => res)
+      .then(done);
     });
 
     it('should update static after file remove', done => {
@@ -53,30 +54,37 @@ describe('build.js', () => {
       promiseTimeOut(1000)
         .then(() => {
           assert.equal(fs.existsSync(staticTestTarget), false);
-          watches.forEach(watch => watch.close());
+          watches.forEach(watch => watch.watcher.close());
         })
+        .catch (res => res)
         .then(done);
     });
   });
 
-  describe('live()', () => {
-    it('should update build js an update', done => {
-      let appMap = JSON.parse(fs.readFileSync('./tests/app.map.json', 'utf-8')),
-        fileName = './tests/live-build-asset.js',
+  describe('live()', function () {
+    this.timeout(10000);
+
+    it('should update build when js file udpates', done => {
+      let appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8')),
+        fileName = './tests/resources/live-build-asset-child.js',
         jsCode = fs.readFileSync(fileName, 'utf-8'),
-        updatedJsCode = jsCode + '\nlet x = 1;';
+        uniqueString = `test ${(new Date()).getTime()}`,
+        updatedJsCode = jsCode.replace(/testing build\.live/, uniqueString);
 
       build.live(appMap).then(watches => {
         fs.writeFileSync(fileName, updatedJsCode);
-        
-        promiseTimeOut(1000)
+        return promiseTimeOut(8000)
           .then(() => {
-            assert.equal(fs.readFileSync(fileName, 'utf-8'), updatedJsCode);
-            watches.forEach(watch => watch.close());
-            fs.writeFileSync(fileName, jsCode);
-          })
-          .then(done);
-      }).catch(err => done(err));
+            let newFileContent = fs.readFileSync('./tests/dist/webWorker.js', 'utf-8');
+            
+            watches.forEach(watch => watch.watcher.close());
+            fs.writeFileSync(fileName, jsCode); //revert the file before assert that might fail
+
+            assert.equal(newFileContent.indexOf(uniqueString) > -1, true);
+          });
+      })
+      .catch (res => res)
+      .then(done);
     });
   });
 });

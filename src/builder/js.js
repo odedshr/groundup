@@ -1,16 +1,20 @@
 const fs = require('fs'),
-  webpack = require('webpack'),
-  MemoryFileSystem = require('memory-fs'),
+  rollup = require('rollup'),
   babel = require('babel-core'),
   UglifyJS = require('uglify-js'),
   mapNested = require('./map-nested.js'),
   errors = require('../etc/errors.js'),
 
-  importPattern = 'require\\((["\'])(.*\\.js)\\1\\)';
+  //importPattern = 'require\\((["\'])(.*\\.js)\\1\\)';
+  importPattern = `import.*(["\\'])(.*\\.js)\\1`;
   
   class Compiler {
     compile(fileName) {
-      return this.loadFile(fileName)
+      if (!Array.isArray(fileName)) {
+        fileName = [ fileName ];
+      }
+
+      return this.loadFiles(fileName)
         .then(fileSet => {
           if(fileSet.content.length === 0) {
             return fileSet;
@@ -41,29 +45,23 @@ const fs = require('fs'),
       return new Promise(resolve => resolve(mapNested(fileName, importPattern)));
     }
     
-    loadFile(fileName) {
-      let tempOutputFileName = 'output.js',
-      compiler = webpack({
-        entry: fileName,
-        output: { filename: tempOutputFileName },
-        mode: 'production'
-      }),
-      memFs = compiler.outputFileSystem = new MemoryFileSystem();
+    loadFiles(input, format = 'cjs') {
+      return Promise
+        .all(input.map(file => this.loadFile(file, format)))
+        .then(res => res.reduce((memo, item) => {
+          memo.files = memo.files.concat(item.files);
+          memo.content += item.content;
+          return memo;
+        }, { files: [], content: ''}));
+    }
 
-      return new Promise((resolve, reject) => {
-        compiler.run((err, stats) => {
-          if (err) {
-            return reject(err);
-          }
-  
-          const outputPath = `${compiler.options.output.path}/${compiler.options.output.filename}`;
-  
-          resolve({
-            files: stats.toJson().modules.map(module => module.identifier),
-            content: memFs.existsSync(outputPath) ? memFs.readFileSync(outputPath, 'utf-8') : ''
-          });
-        });
-      });
+    loadFile(input, format = 'cjs') {
+      return rollup.rollup({ input })
+        .then(bundle => bundle.generate({ format }))
+        .then (result => ({
+          files: result.modules,
+          content: result.code
+        }));
     }
   }
 

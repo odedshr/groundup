@@ -78,10 +78,16 @@ Files are linked using the `require('filename.js')` command
 
 ## Static
 ### copy(source, target)
-### removeFolder(path)
-Removes folder (with content)
 
 ### mapFile(pattern) => [ filesMatchingPatternArray ]
+
+## etc/files
+
+### add(path)
+create the path
+
+### remove(folder)
+Removes folder (with content)
 
 ## Build
 The Build module process a fileMap and create each entry based on its inputs.
@@ -103,3 +109,8 @@ For example:
 
 ### once(fileMap) => Promise that fileMap was processed
 ### live(fileMap) => [ WatchesArray ]
+
+
+## Additional notes
+- I'm not really using hoek, but it's being using by some dependecies and I must
+force it to its latest version as earlier ones have security issues

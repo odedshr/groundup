@@ -1,4 +1,5 @@
 const fs = require('fs'),
+  files = require('../etc/files.js'),
   glob = require('glob');
 
 function Static () {}
@@ -7,7 +8,7 @@ Static.prototype = {
   copy(source, target) {
     let sources = Array.isArray(source) ? source : [source];
 
-    this._validatePathExists(target.substring(0, target.lastIndexOf('/')));
+    files.addPath(target.substring(0, target.lastIndexOf('/')));
 
     return Promise.all(sources.map(source => {
       glob.sync(source, {})
@@ -24,24 +25,6 @@ Static.prototype = {
     }));
   },
 
-  removeFolder(path) {
-    let curPath;
-
-    if (fs.existsSync(path)) {
-      fs.readdirSync(path)
-        .forEach(file => {
-          curPath = path + '/' + file;
-
-          if(fs.statSync(curPath).isDirectory()) { // recurse
-            this.removeFolder(curPath);
-          } else { // delete file
-            fs.unlinkSync(curPath);
-          }
-        });
-      fs.rmdirSync(path);
-    }
-  },
-
   mapFile(fileName) {
     return new Promise(resolve => resolve(glob.sync(fileName, {})));
   },
@@ -56,18 +39,6 @@ Static.prototype = {
     }
   
     return target;
-  },
-  
-  _validatePathExists(path) {
-    path.split('/').reduce((acc, folder) => {
-      acc += folder;
-
-      // when path is absolute ('/Volumes...') the first acc ==='' so we shouldn't try to create it
-      if (acc.length && !fs.existsSync(acc)) {
-        fs.mkdirSync(acc);
-      }
-      return acc + '/';
-    }, '');
   }
 };
 

@@ -1,4 +1,5 @@
 const fs = require('fs'),
+  errors = require('../etc/errors.js'),
   log = console.log,
 
   getFilePath = fileName => {
@@ -21,9 +22,7 @@ const fs = require('fs'),
     const importRegex = new RegExp(importPattern,'mg');
 
     if (!fs.existsSync(fileName)) {
-      log('fileNotFound: ' + fileName);
-
-      return [];
+      throw errors.notFound('mapSingleNested', fileName);
     }
 
     let files = [ fileName ],
@@ -33,7 +32,7 @@ const fs = require('fs'),
 
     while ((match = importRegex.exec(content)) !== null) {
       if (files.indexOf(filePath + match[2]) === -1 ) {
-        files = files.concat(mapSingleNested(filePath + match[2], importPattern));
+        files = files.concat(mapSingleNested(filePath + match[2].replace(/^\.\//,''), importPattern));
       }
     }
 
@@ -55,7 +54,7 @@ const fs = require('fs'),
     const importRegex = new RegExp(importPattern,'mg');
 
     if (!fs.existsSync(fileName)) {
-      log('fileNotFound: ' + fileName);
+      log(errors.notFound('loadSingleNested', fileName));
 
       return { files: [], content: ''};
     }

@@ -1,4 +1,5 @@
 const fs = require('fs'),
+  files = require('../etc/files.js'),
   errors = require('../etc/errors.js'),
   colors = require('../etc/console-colors.js'),
   css = require('./css.js'),
@@ -53,8 +54,10 @@ function getWatcherPromises(entry, files, mapFunc, target) {
 
 function getWatchers(entry, files, target) {
   return files.map(
-    file => fs.watch(file, 
-      (eventType, triggering) => logged(`${colors.FgGreen}✓${colors.Reset} ${colors.Dim}Recompiled${colors.Reset} ` +
+    file => ({
+      file,
+      watcher: fs.watch(file, 
+        (eventType, triggering) => logged(`${colors.FgGreen}✓${colors.Reset} ${colors.Dim}Recompiled${colors.Reset} ` +
         `${colors.FgCyan}${entry}${colors.Reset}`, 
         () => writeToFile(
           target,
@@ -63,8 +66,8 @@ function getWatchers(entry, files, target) {
           getFileType(entry),
           triggering
         )
-      )
-    )
+      ))
+    })
   );
 }
 
@@ -75,6 +78,8 @@ function getFileType(fileName) {
 }
 
 function writeToFile(target, entry, entries, fileTypeDef, triggeredByFile) {
+  let targetFile = buildPath(target, entry);
+
   if (fileTypeDef.id === 'static') {
     if (triggeredByFile !== undefined) {
       removeFileIfRedundant(triggeredByFile, entries, `${target}/${entry}`);
@@ -83,8 +88,10 @@ function writeToFile(target, entry, entries, fileTypeDef, triggeredByFile) {
   } else {
     return fileTypeDef.handler.compile(entries)
       .then(response => {
+        files.addPath(targetFile.substring(0, targetFile.lastIndexOf('/')));
         fs.writeFileSync(buildPath(target, entry), response.content);
-      });
+        return response;
+      })
   }
 }
 

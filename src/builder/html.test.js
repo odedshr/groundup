@@ -4,9 +4,9 @@ const assert = require('assert'),
 describe('html compiler', () => {
   describe('html.mapFile', () => {
     it('should get map file and its dependencies', done => {
-      html.mapFile('./tests/file2.html')
+      html.mapFile('./tests/resources/file2.html')
       .then(output => {
-        assert.equal(JSON.stringify(output), '["./tests/file2.html","./tests/subfolder/file2.1.html"]');
+        assert.equal(JSON.stringify(output), '["./tests/resources/file2.html","./tests/resources/subfolder/file2.1.html"]');
         done();
       })
       .catch(done);
@@ -15,17 +15,17 @@ describe('html compiler', () => {
 
   describe('html.loadFile', () => {
     it('should get 2 html files', done => {
-      html.loadFile('./tests/file1.html')
+      html.loadFile('./tests/resources/file1.html')
       .then(output => {
         assert.equal(output.files.length, 2);
-        assert.equal(output.files[1], './tests/file1.1.html');
+        assert.equal(output.files[1], './tests/resources/file1.1.html');
         done();
       })
       .catch(done);
     });
 
     it('should get html file content with its imports embeded', done => {
-      html.loadFile('./tests/file1.html')
+      html.loadFile('./tests/resources/file1.html')
       .then(output => {
         assert.equal(output.content, '<html>\n  <head>\n    <style>\n  body {\n    color: red;\n  }\n</style>\n  </head>\n</html>');
         done();
@@ -34,7 +34,7 @@ describe('html compiler', () => {
     });
 
     it('should get handle subfolders bravely', done => {
-      html.loadFile('./tests/file2.html')
+      html.loadFile('./tests/resources/file2.html')
       .then(output => {
         assert.equal(output.content, '<html>\n  <head>\n    <style>\n  body {\n    color: blue;\n  }\n</style>\n  </head>\n</html>');
         done();
@@ -56,7 +56,7 @@ describe('html compiler', () => {
 
   describe('html.compile', () => {
     it('should compile, minify a file', done => {
-    html.compile('./tests/file1.html')
+    html.compile('./tests/resources/file1.html')
       .then(output => {
         assert.equal(output.content, '<html>\n<head>\n<style>body{color:red}</style>\n</head>\n</html>');
         done();
