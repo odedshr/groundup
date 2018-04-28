@@ -1,0 +1,12 @@
+{
+  "source": "tests/resources",
+  "target": "tests/dist",
+  "entries": {
+    "entry.html": ["file1.html"],
+    "main.js": ["file1.js"],
+    "main.css": ["file1.scss", "file2.scss"],
+    "webWorker.js": ["live-build-asset.js"],
+    "static/": ["subfolder/"]
+  }
+}
+
