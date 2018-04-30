@@ -2,9 +2,24 @@ const fs = require('fs'),
   files = require('../etc/files.js'),
   glob = require('glob');
 
-function Static () {}
-
-Static.prototype = {
+  /**
+   * Return the file's target path by merging by omitting merging the string and ommitting the file's actual name
+   * @param {String} file 
+   * @param {String} targetPath 
+   */
+  function getFileTargt (file, targetPath) {
+    if (targetPath.match(/\/$/)) {
+      return targetPath + file.substr(file.lastIndexOf('/') + 1);
+    }
+  
+    return targetPath;
+  }
+class Static {
+  /**
+   * copy source files to target
+   * @param {String[]} source (or a single string)
+   * @param {String} target 
+   */
   copy(source, target) {
     let sources = Array.isArray(source) ? source : [source];
 
@@ -13,7 +28,7 @@ Static.prototype = {
     return Promise.all(sources.map(source => {
       glob.sync(source, {})
         .forEach(file => {
-          let fileTarget = this._getFileTargt(file, target),
+          let fileTarget = getFileTargt(file, target),
             err = fs.copyFileSync(file, fileTarget);
 
           if (!fs.lstatSync(target).isDirectory() || err) {
@@ -23,23 +38,15 @@ Static.prototype = {
           }
         });
     }));
-  },
+  }
 
+  /**
+   * Returns a promise for a list of all files matching the fileName pattern
+   * @param {String} fileName 
+   */
   mapFile(fileName) {
     return new Promise(resolve => resolve(glob.sync(fileName, {})));
-  },
-
-  getFileTargt(file, target) {
-    return this._getFileTargt(file, target);
-  },
-
-  _getFileTargt(file, target) {
-    if (target.match(/\/$/)) {
-      target += file.substr(file.lastIndexOf('/') + 1);
-    }
-  
-    return target;
   }
-};
+}
 
 module.exports = new Static();

@@ -1,5 +1,5 @@
 function foo () {
-  console.log('testing build.live()');
+  console.log('testing build live');
 }
 
-export { foo }
+export { foo };

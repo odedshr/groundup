@@ -5,16 +5,6 @@ const assert = require('assert'),
   static = require('./static.js');
 
 describe('static.js', () => {
-  describe('static.getFileTargt()', () => {
-    it('should keep file name in target\'s folder', () => {
-      assert.equal(static.getFileTargt('tests/resources/file1.js', 'target/'), 'target/file1.js');
-    });
-
-    it('should rename target file', () => {
-      static.getFileTargt('tests/resources/file1.js', 'tests/dist', 'tests/dist');
-    });
-  });
-
   describe('static.copy()', () => {
     afterEach(() => {
       if (fs.existsSync('tests/dist/')) {

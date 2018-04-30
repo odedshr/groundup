@@ -1,6 +1,10 @@
 const fs = require('fs');
 
 class Files {
+  /**
+   * Verifies path exists by creating each folder if not already exists
+   * @param {String} path 
+   */
   addPath(path) {
     path.split('/').reduce((acc, folder) => {
       acc += folder;
@@ -13,6 +17,10 @@ class Files {
     }, '');
   }
   
+  /**
+   * Removes a file or folder and its content recursively
+   * @param {String} path 
+   */
   removePath(path) {
     let curPath;
 

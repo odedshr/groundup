@@ -77,7 +77,7 @@ describe('javascript compiler', () => {
 
     it('should fail to compile bad js file', done => {
       js.compile('./tests/./resources/file-with-error.js')
-      .then(output => {
+      .then(() => {
         assert.fail('it should have thrown an error');
       }, error => {
         assert.equal(error.message, 'Identifier \'x\' has already been declared');
