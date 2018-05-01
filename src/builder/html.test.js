@@ -1,5 +1,5 @@
 const assert = require('assert'),
-  html = require('./html.js');
+  html = require('../../bin/builder.js').html;
 
 describe('html compiler', () => {
   describe('html.mapFile', () => {

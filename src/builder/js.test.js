@@ -1,5 +1,5 @@
 const assert = require('assert'),
-  js = require('./js.js');
+  js = require('../../bin/builder.js').js;
 
 describe('javascript compiler', () => {
   describe('js.mapFile', () => {

@@ -1,7 +1,8 @@
-const { once, live } = require('./src/builder/build.js'),
-  colors = require('./src/etc/console-colors.js'),  
-  fs = require('fs'),
-  stdin = process.stdin;
+import { once, live } from './build.js';
+import colors  from '../etc/console-colors.js';
+import fs  from 'fs';
+  
+const stdin = process.stdin;
 
 let args = process.argv.slice(process.argv.indexOf(process.mainModule.filename) + 1),
   isLive = (process.argv.indexOf('--live') > -1),

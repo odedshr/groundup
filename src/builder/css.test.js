@@ -1,5 +1,5 @@
 const assert = require('assert'),
-  css = require('./css.js');
+  css = require('../../bin/builder.js').css;
 
 describe('css compiler', () => {
   describe('css.mapFile', () => {

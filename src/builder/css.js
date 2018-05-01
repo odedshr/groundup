@@ -1,11 +1,14 @@
-const mapNested = require('./map-nested.js'),
-  postcss = require('postcss'),
-  prefix = postcss([ require('autoprefixer') ]),
-  CleanCSS = require('clean-css'),
-  sass = data => require('node-sass').renderSync({ data }).css.toString(),
+import mapNested from './map-nested.js';
+import postcss from 'postcss';
+import autoprefixer from 'autoprefixer';
+import CleanCSS from 'clean-css';
+import nodeSass from 'node-sass';
+  
+const prefix = postcss([ autoprefixer ]),
+  sass = data => nodeSass.renderSync({ data }).css.toString(),
   importPattern = '^@import.*(["\'])(.*)\\1.*$';
   
-class Compiler {
+export default {
   /**
    * Returns a promise for a merged, transpiled and minified version of a scss file
    * @param {String} fileName of scss file
@@ -25,7 +28,7 @@ class Compiler {
         return fileSet;
       });
     });
-  }
+  },
 
   /**
    * Returns a promise for a minified css code
@@ -33,7 +36,7 @@ class Compiler {
    */
   minify(css) {
     return new Promise(resolve => resolve(new CleanCSS({level: 2}).minify(css).styles));
-  }
+  },
 
   /**
    * Returns a promise for a auto-prefixed css code
@@ -41,7 +44,7 @@ class Compiler {
    */
   prefix(css) {
     return prefix.process(css, { from: '' }).then(prefixed => prefixed.css);
-  }
+  },
 
   /**
    * Returns a promise for a transpiled css code
@@ -49,7 +52,7 @@ class Compiler {
    */
   sass(scss) {
     return new Promise(resolve => resolve(sass(scss)));
-  }
+  },
 
   /**
    * Returns a promise for a list of all files linked by `import` to the input file
@@ -57,7 +60,7 @@ class Compiler {
    */
   mapFile(fileName) {
     return new Promise(resolve => resolve(mapNested(fileName, importPattern)));
-  }
+  },
 
   /**
    * Returns a promise for a code of all files linked by `import` to the input file
@@ -66,6 +69,4 @@ class Compiler {
   loadFile(fileName) {
     return new Promise(resolve => resolve(mapNested.load(fileName, importPattern)));
   }
-}
-
-module.exports = new Compiler();
+};

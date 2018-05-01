@@ -1,6 +1,7 @@
-const fs = require('fs'),
-  errors = require('../etc/errors.js'),
-  log = console.log,
+import fs  from 'fs';
+import errors  from '../etc/errors.js';
+
+const log = console.log,
 
   getFilePath = fileName => {
     let startOfName = fileName.lastIndexOf('/');
@@ -77,4 +78,4 @@ const fs = require('fs'),
 
 mapNested.load = loadNested;
 
-module.exports = mapNested;
+export default mapNested;

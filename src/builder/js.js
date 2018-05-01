@@ -1,11 +1,11 @@
-const rollup = require('rollup'),
-  babel = require('babel-core'),
-  UglifyJS = require('uglify-js'),
-  mapNested = require('./map-nested.js'),
+import rollup from 'rollup';
+import babel from 'babel-core';
+import UglifyJS from 'uglify-js';
+import mapNested from './map-nested.js';
 
-  importPattern = `import.*(["\\'])(.*\\.js)\\1`;
+const importPattern = `import.*(["\\'])(.*\\.js)\\1`;
   
-class Compiler {
+export default {
    /**
    * Returns a promise for a merged, transpiled and uglified version of an es6 file
    * @param {String} fileName of scss file
@@ -28,7 +28,7 @@ class Compiler {
             return fileSet;
           });
       });
-  }
+  },
 
   /**
   * Returns a promise for a minified js code
@@ -40,7 +40,7 @@ class Compiler {
       
       output.error ? reject(output.error) : resolve(output.code);
     });
-  }
+  },
 
   /**
   * Returns a promise for a transpiled code
@@ -49,7 +49,7 @@ class Compiler {
   */
   transpile(esCode, minified = false) {
     return new Promise(resolve => resolve(babel.transform(esCode, { presets: ['env'], minified }).code));
-  }
+  },
 
   /**
   * Returns a promise for a list of all files linked by `import` to the input file
@@ -57,7 +57,7 @@ class Compiler {
   */
   mapFile(fileName) {
     return new Promise(resolve => resolve(mapNested(fileName, importPattern)));
-  }
+  },
   
   /**
    * Returns a promise for a code of all files linked by `import` to the input files
@@ -72,7 +72,7 @@ class Compiler {
         memo.content += item.content;
         return memo;
       }, { files: [], content: ''}));
-  }
+  },
 
   /**
   * Returns a promise for a code of all files linked by `import` to the input file
@@ -87,6 +87,4 @@ class Compiler {
         content: result.code
       }));
   }
-}
-
-module.exports = new Compiler();
+};

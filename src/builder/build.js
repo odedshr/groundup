@@ -1,18 +1,17 @@
-const fs = require('fs'),
-  files = require('../etc/files.js'),
-  errors = require('../etc/errors.js'),
-  colors = require('../etc/console-colors.js'),
-  css = require('./css.js'),
-  html = require('./html.js'),
-  js = require('./js.js'),
-  static = require('./static.js'),
+import { existsSync, readFileSync, unlinkSync,  watch, writeFileSync } from 'fs';
+import errors from '../etc/errors.js';
+import colors from '../etc/console-colors.js';
+import css from './css.js';
+import html from './html.js';
+import js from './js.js';
+import files from './files.js';
   
-  log = console.log,
+const log = console.log,
 
   types = new Map([['js', { regExp: /\.js$/, id: 'js', handler: js }],
     ['css', { regExp: /\.css$/, id: 'css', handler: css }],
     ['html', { regExp: /\.html$/,id: 'html', handler: html }],
-    ['static', { regExp: /\/$/, id: 'static', handler: static }]]);
+    ['files', { regExp: /\/$/, id: 'files', handler: files }]]);
 
 /**
  * Runs `method()` and conole.time the time it took, along with `label`
@@ -32,11 +31,11 @@ function logged(label, method) {
  * TBD: check file content for required fields
  */
 function readMapFile(fileName) {
-  if (!fs.existsSync(fileName)) {
+  if (!existsSync(fileName)) {
     throw errors.notFound('map.json', fileName);
   }
 
-  return JSON.parse(fs.readFileSync(fileName, 'utf-8'));
+  return JSON.parse(readFileSync(fileName, 'utf-8'));
 }
 
 /**
@@ -90,7 +89,7 @@ function getWatchers(files, output, target) {
   return files.map(
     file => ({
       file,
-      watcher: fs.watch(file, 
+      watcher: watch(file, 
         (eventType, triggering) => logged(`${colors.FgGreen}✓${colors.Reset} ${colors.Dim}Recompiled${colors.Reset} ` +
         `${colors.FgCyan}${output}${colors.Reset}`, 
         () => writeToFile(
@@ -112,7 +111,7 @@ function getWatchers(files, output, target) {
 function getFileType(fileName) {
   let type = Array.from(types.values()).find(type => type.regExp.test(fileName));
 
-  return type || types.get('static');
+  return type || types.get('files');
 }
 
 /**
@@ -126,16 +125,16 @@ function getFileType(fileName) {
 function writeToFile(targetPath, targetFileName, sourceFile, fileTypeDef, triggeredByFile) {
   let absoluteTarget = getAbsolutePath(targetPath, targetFileName);
 
-  if (fileTypeDef.id === 'static') {
+  if (fileTypeDef.id === 'files') {
     if (triggeredByFile !== undefined) {
       removeFileIfRedundant(triggeredByFile, sourceFile, `${targetPath}/${targetFileName}`);
     }
-    return static.copy(sourceFile, getAbsolutePath(targetPath, targetFileName));
+    return files.copy(sourceFile, getAbsolutePath(targetPath, targetFileName));
   } else {
     return fileTypeDef.handler.compile(sourceFile)
       .then(response => {
         files.addPath(absoluteTarget.substring(0, absoluteTarget.lastIndexOf('/')));
-        fs.writeFileSync(absoluteTarget, response.content);
+        writeFileSync(absoluteTarget, response.content);
         return response;
       })
   }
@@ -151,22 +150,26 @@ function removeFileIfRedundant(file, entries, destPath) {
   if (!entries.find(entry => {
     if (entry === file) {
       // if entry is the actual file
-      return fs.existsSync(entry);
+      return existsSync(entry);
     } else if (entry.substring(entry.length - 1) === '/') {
       // if entry is a folder containing the file
-      return fs.existsSync(`${entry}${file}`);
+      return existsSync(`${entry}${file}`);
     }
     return false;
-  }) && fs.existsSync(`${destPath}/${file}`)) {
-    fs.unlinkSync(`${destPath}/${file}`);
+  }) && existsSync(`${destPath}${file}`)) {
+    unlinkSync(`${destPath}${file}`);
   }
 }
 
 /**
  * Builds destination folder according to appMap description
- * @param {Object} appMap 
+ * @param {Object} appMap OR filename
  */
 function once(appMap) {
+  if (typeof appMap === 'string') {
+    appMap = readMapFile(appMap);
+  }
+
   let source = appMap.source || '',
       target = appMap.target || '';
 
@@ -181,9 +184,13 @@ function once(appMap) {
 
 /**
  * Creates watches to listen to sources files of appMap description
- * @param {Object} appMap 
+ * @param {Object} appMap OR filename
  */
 function live(appMap) {
+  if (typeof appMap === 'string') {
+    appMap = readMapFile(appMap);
+  }
+
   let target = appMap.target || '',
       entries = getAbsolutePathes(appMap.source || '', appMap.entries);
   
@@ -196,22 +203,6 @@ function live(appMap) {
   ).then(watcheArrays => watcheArrays.reduce((acc, watches) => acc.concat(watches), []));
 }
 
-class Builder {
-  /**
-   * Reads appMap file and build it
-   * @param {String} appMap file name
-   */
-  once(appMap) {
-    return once((typeof appMap === 'string') ? readMapFile(appMap) : appMap);
-  }
+const builder = { once, live };
 
-  /**
-   * Reads appMap file and set watches for it
-   * @param {String} appMap 
-   */
-  live(appMap) {
-    return live((typeof appMap === 'string') ? readMapFile(appMap) : appMap);
-  }
-}
-
-module.exports = new Builder();
+export { builder as default, once, live };

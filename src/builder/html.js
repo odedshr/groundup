@@ -1,8 +1,9 @@
-const minify = require('html-minifier').minify,
-  mapNested = require('./map-nested.js'),
-  importPattern = '<link rel="import" href=(["\'])(.*\.html)\\1 data-replace="true"\\s*\\/>';
+import { minify }  from 'html-minifier';
+import mapNested from './map-nested.js';
+
+const importPattern = '<link rel="import" href=(["\'])(.*\.html)\\1 data-replace="true"\\s*\\/>';
   
-class Compiler {
+export default {
 
   /**
    * Returns a promise for a merged and minified version of a html file
@@ -21,7 +22,7 @@ class Compiler {
           return fileSet;
         });
     });
-  }
+  },
 
   /**
    * Returns a promise for a minified html code
@@ -48,7 +49,7 @@ class Compiler {
       sortClassName: true,
       useShortDoctype: true
     })));
-  }
+  },
 
   /**
    * Returns a promise for a list of all files linked by `import` to the input file
@@ -56,7 +57,7 @@ class Compiler {
    */
   mapFile(fileName) {
     return new Promise(resolve => resolve(mapNested(fileName, importPattern)));
-  }
+  },
 
   /**
    * Returns a promise for a code of all files linked by `import` to the input file
@@ -65,6 +66,4 @@ class Compiler {
   loadFile(fileName) {
     return new Promise(resolve => resolve(mapNested.load(fileName, importPattern)));
   }
-}
-
-module.exports = new Compiler();
+};
