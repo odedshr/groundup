@@ -3,7 +3,7 @@ const assert = require('assert'),
   fs = require('fs'),
   files = require('../../bin/builder.js').files;
 
-describe('files.js', () => {
+describe('files builder', () => {
   describe('files.copy()', () => {
     afterEach(() => {
       if (fs.existsSync('tests/dist/')) {

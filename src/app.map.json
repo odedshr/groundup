@@ -1,9 +1,0 @@
-{
-  "source": "src",
-  "target": "bin",
-  "entries": {
-    "DOMinion.js": ["html-manipulate/DOMinion.js"],
-    "HtmlCompiler.js": ["html-manipulate/HtmlCompiler.js"],
-    "./": ["builder-facade/"]
-  }
-}

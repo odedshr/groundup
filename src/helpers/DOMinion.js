@@ -1,3 +1,8 @@
+/**
+ * Return an updated DOM tree with minimal replacement of nodes
+ * @param {Node} current 
+ * @param {Node} plan 
+ */
 function update(current, plan) {
   const map = {};
 
@@ -16,7 +21,7 @@ function addCurrentElementsToMap (root, map) {
     stack = stack.concat([].slice.call(node.childNodes || []));
 
     if (node.tagName) {
-      map[nodeIdentifier] = { node: node };
+      map[nodeIdentifier] = { node };
     }
   }
 }
@@ -75,11 +80,11 @@ function setAttributes (node, attributes) {
     return;
   }
 
-  for (let i=0; i < attributes.length; i++) {
-    if (attributes[i].nodeName !== 'id') {
-      node.setAttribute(attributes[i].nodeName, attributes[i].value);
+  attributes.forEach(attribute => {
+    if (attribute.nodeName !== 'id') {
+      node.setAttribute(attribute.nodeName, attribute.value);
     }
-  }
+  });
 }
 
 function getNodeIdentifierFromAttributes(node) {

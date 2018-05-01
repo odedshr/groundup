@@ -4,7 +4,7 @@ const assert = require('assert'),
   build = require('../../bin/builder.js').build;
   
 
-describe('build.js', () => {
+describe('builder', () => {
   describe('once()', () => {
     it('should build a dist', done => {
       let appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8'));

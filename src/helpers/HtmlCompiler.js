@@ -1,4 +1,4 @@
-  import * as errors from '../etc/errors.js';
+import errors from '../etc/errors.js';
   
   const delimiters = [{ start: '{{', end: '}}' }], // delimiters array as you switch to temporary delimiters and then revert back
         patterns = {
@@ -53,7 +53,7 @@
       delimiters.push(delimiter);
       buildPatterns(delimiter.start, delimiter.end);
       string = string.split(item[0])
-                     .join( populate(templates, locale, data, site[3]) );
+                     .join( populate(templates, locale, data, item[3]) );
       delimiters.pop();
       buildPatterns(previousDelimiter.start, previousDelimiter.end);
       patterns.fix.lastIndex = 0;
@@ -81,11 +81,11 @@
         originalValue = { element: data[iterator],
                           idx: data[indexName] };
 
-        loop.forEach((val, key) => {
-          data[iterator] = val;
+        for (let key in loop) {
+          data[iterator] = loop[key];
           data[indexName] = key;
           array.push (populate(templates, locale, data, item[5]));
-        });
+        }
 
         // restoring the original values -
         data[iterator] = originalValue.element;
@@ -93,12 +93,13 @@
       } else if (loop !== undefined) {
         // loop is an object, loop through the main property
         if (loop[item[1]] !== undefined) {
-          loop[item[1]].forEach((value, key) => {
+          for (let key in loop[item[1]]) {
+            let value = loop[item[1]][key];
             if (typeof val === 'object' && indexName !== undefined) {
               value[indexName] = key;
             }
             array.push(populate(templates, locale, value, item[5]));
-          });
+          }
         }
       }
 
@@ -243,6 +244,14 @@ class HTMLCompiler {
    * @param {XMLSerializer} xmlSerializer 
    */
   constructor(domParser, xmlSerializer) {
+    if (domParser === undefined) {
+      throw errors.missingInput('domParser');
+    }
+
+    if (xmlSerializer === undefined) {
+      throw errors.missingInput('xmlSerializer');
+    }
+
     this.domParser = domParser;
     this.xmlSerializer = xmlSerializer;
   }
@@ -303,4 +312,4 @@ class HTMLCompiler {
   }
 }
 
-export { HTMLCompiler };
+export default HTMLCompiler;

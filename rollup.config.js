@@ -2,6 +2,13 @@ const external = ['fs', 'postcss','autoprefixer','clean-css','node-sass','html-m
   format = 'cjs';
 
 export default [
+  { input: './src/etc/errors.js',
+    external,
+    output: {
+      file: './bin/errors.js',
+      format
+    }
+  },
   { input: './src/builder/builder-cli.js',
     external,
     output: {
@@ -13,6 +20,13 @@ export default [
     external,
     output: {
       file: './bin/builder.js',
+      format
+    }
+  },
+  { input: './src/helpers/HtmlCompiler.js',
+    external,
+    output: {
+      file: './bin/HtmlCompiler.js',
       format
     }
   }

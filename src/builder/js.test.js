@@ -1,7 +1,7 @@
 const assert = require('assert'),
   js = require('../../bin/builder.js').js;
 
-describe('javascript compiler', () => {
+describe('javascript builder', () => {
   describe('js.mapFile', () => {
     it('should get map file and its dependencies', done => {
       js.mapFile('./tests/resources/file1.js')
