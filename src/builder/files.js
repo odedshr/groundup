@@ -28,13 +28,21 @@ export default {
     return Promise.all(sources.map(source => {
       glob.sync(source, {})
         .forEach(file => {
-          let fileTarget = getFileTargt(file, target),
-            err = copyFileSync(file, fileTarget);
+          let fileTarget = getFileTargt(file, target);
 
-          if (!lstatSync(target).isDirectory() || err) {
-            return new Promise((resolve, reject) => (err ? reject(err): resolve()));
-          } else {
+          if (lstatSync(file).isDirectory()) {
+            this.addPath(fileTarget);
             return this.copy(file + '/*.*', fileTarget + '/');
+          } else {
+            return new Promise((resolve, reject) => {
+              let err = copyFileSync(file, fileTarget);
+              if (err) {
+                console.error(`GroundUp:copyFileSync failed: ${file} => ${fileTarget}`);
+                reject(err);
+              } else {
+                resolve();
+              }
+            });
           }
         });
     }));
