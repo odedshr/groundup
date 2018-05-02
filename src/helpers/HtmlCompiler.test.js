@@ -74,6 +74,10 @@ describe('html compiler', () => {
       assert.equal(result, 'Paul; John; Ringo; George; ');
     });
 
+    it('should fail iterating a list with wrong identifier', () => {
+      assert.throws(() => html.compileToString({},{},{ beatles: { beatle: ['Paul', 'John','Ringo', 'George']}},'{{name@beatles}}{{.}}; {{/name@beatles}}'), Error);
+    });
+
     it('should iterate a straightforward array', () => {
       let result = html.compileToString({},{},{ names: ['Paul', 'John','Ringo', 'George']},'{{name@names}}{{name}}; {{/name@names}}');
       assert.equal(result, 'Paul; John; Ringo; George; ');

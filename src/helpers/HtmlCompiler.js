@@ -76,6 +76,7 @@ import errors from '../etc/errors.js';
 
       if (Array.isArray(loop)) {
         iterator = item[1];
+
         // since we write to the main scope, which may have these variable,
         // we'll back them up
         originalValue = { element: data[iterator],
@@ -100,6 +101,8 @@ import errors from '../etc/errors.js';
             }
             array.push(populate(templates, locale, value, item[5]));
           }
+        } else {
+          throw errors.badInput('bad iterator', item[1]);
         }
       }
 

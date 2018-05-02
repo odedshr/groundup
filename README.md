@@ -1,4 +1,5 @@
 # GroundUp
+[![Build Status](https://travis-ci.org/odedshr/groundup.svg?branch=master)](https://travis-ci.org/odedshr/groundup)
 Backgroud scripts and tools for my applications
 
 ## Installation
