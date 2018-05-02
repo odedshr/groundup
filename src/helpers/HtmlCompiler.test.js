@@ -69,7 +69,12 @@ describe('html compiler', () => {
       assert.equal(result, 'Hello world');
     });
 
-    it('should return a loop', () => {
+    it('should iterate a list of items', () => {
+      let result = html.compileToString({},{},{ beatles: { beatle: ['Paul', 'John','Ringo', 'George']}},'{{beatle@beatles}}{{.}}; {{/beatle@beatles}}');
+      assert.equal(result, 'Paul; John; Ringo; George; ');
+    });
+
+    it('should iterate a straightforward array', () => {
       let result = html.compileToString({},{},{ names: ['Paul', 'John','Ringo', 'George']},'{{name@names}}{{name}}; {{/name@names}}');
       assert.equal(result, 'Paul; John; Ringo; George; ');
     });
