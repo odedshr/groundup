@@ -2,7 +2,7 @@
   "name": "groundup",
   "version": "1.1.1",
   "description": "Background scripts and tools for my apps",
-  "main": "builder.js",
+  "main": "bin/groundup.js",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha src/**/*.test.js",
     "build": "node ./src/builder-facade/Builder.js ./src/app.map.json",

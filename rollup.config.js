@@ -29,5 +29,12 @@ export default [
       file: './bin/HtmlCompiler.js',
       format
     }
+  },
+  { input: './src/index.js',
+  external,
+  output: {
+    file: './bin/groundup.js',
+    format
   }
+}
 ];
