@@ -1,6 +1,6 @@
 const assert = require('assert'),
   xmldom = require('xmldom'),
-  HtmlCompiler = require('../../bin/HtmlCompiler.js'),
+  HtmlCompiler = require('../../bin/groundup.js').HtmlCompiler,
   html = new HtmlCompiler(new xmldom.DOMParser(), new xmldom.XMLSerializer());
 
 describe('html compiler', () => {
