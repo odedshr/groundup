@@ -103,5 +103,15 @@ describe('html compiler', () => {
       let result = html.compileToString({},{},{ value1: 'aa',value2: 'bb',value3: 'cc'},'{{value1}}{{\'[\',\']\'}}[value2]{{/\'[\',\']\'}}{{value3}}');
       assert.equal(result, 'aabbcc');
     });
+
+    it('should ignore comments', () => {
+      let result = html.compileToString({},{},{},'hello {{!--This is a comment--}}world');
+      assert.equal(result, 'hello world');
+    });
+
+    it('should ignore comments with internal code', () => {
+      let result = html.compileToString({},{},{ foo: ()=>{ throw new Error('this code shouldn\'t have run');}}, 'hello {{!--This is a {{foo}}--}}world');
+      assert.equal(result, 'hello world');
+    });
   });
 });

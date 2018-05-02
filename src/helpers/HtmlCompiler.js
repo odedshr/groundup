@@ -13,25 +13,28 @@ import errors from '../etc/errors.js';
         
   function buildPatterns(start, end) {
     // simple replace {{name}}
-    patterns.std = new RegExp(start + '([^#]+?)' + end,'g');
+    patterns.std = new RegExp(start + '([^#]+?)' + end, 'g');
     
     // translate the string {{#btn.ok}}
-    patterns.lng = new RegExp(start+'#(.+?)' + end,'g');
+    patterns.lng = new RegExp(start+'#(.+?)' + end, 'g');
     
     // {{?showName}}{{name}}{{/showName}}
-    patterns.if = new RegExp(start+'\\?(.+?)' + end + '([\\s\\S]+?)' + start + '[\\/$]\\1'+end,'g');
+    patterns.if = new RegExp(start+'\\?(.+?)' + end + '([\\s\\S]+?)' + start + '[\\/$]\\1' + end, 'g');
     
     // {{?!hideName}}{{name}}{{/hideName}}
-    patterns.ifNot = new RegExp(start+'\\?\\!(.+?)' + end + '([\\s\\S]+?)' + start + '\\/\\1'+end,'g');
+    patterns.ifNot = new RegExp(start+'\\?\\!(.+?)' + end + '([\\s\\S]+?)' + start + '\\/\\1' + end, 'g');
     
+    // {{!--this is a comment--}}
+    patterns.comment = new RegExp(start+'\\!--(.+?)--' + end,'g');
+
     // loop {{user@users}} {{name}} {{/user@users}}
-    patterns.loop = new RegExp(start+'([^@}]+?)@([\\s\\S]+?)(:([\\s\\S]+?))?' + end + '([\\s\\S]+?)' + start + '\\/\\1@\\2'+end,'g');
+    patterns.loop = new RegExp(start+'([^@}]+?)@([\\s\\S]+?)(:([\\s\\S]+?))?' + end + '([\\s\\S]+?)' + start + '\\/\\1@\\2' + end, 'g');
     
     // subTemplate {{user:userTemplate}}
-    patterns.inner = new RegExp(start+'\\@([\\s\\S]+?)' + end + '([\\s\\S]+?)' + start + '\\/\\1' + end,'g');
+    patterns.inner = new RegExp(start+'\\@([\\s\\S]+?)' + end + '([\\s\\S]+?)' + start + '\\/\\1' + end, 'g');
     
     // temporarily replace delimiters (e.g. {{'startTag','endTag'}} ... '{{/'startTag','endTag'}})
-    patterns.fix = new RegExp(start+'\'([^\'}]+?)\',\'([\\s\\S]+?)\'' + end + '([\\s\\S]+?)' + start + '\\/\'\\1\',\'\\2\'' + end,'g');
+    patterns.fix = new RegExp(start+'\'([^\'}]+?)\',\'([\\s\\S]+?)\'' + end + '([\\s\\S]+?)' + start + '\\/\'\\1\',\'\\2\'' + end, 'g');
     patterns.quote = new RegExp('^\'.*\'$');
   }
 
@@ -57,6 +60,11 @@ import errors from '../etc/errors.js';
       delimiters.pop();
       buildPatterns(previousDelimiter.start, previousDelimiter.end);
       patterns.fix.lastIndex = 0;
+    }
+
+    // 6. look for comments
+    while ((item = find (patterns.comment, string)) !== null) {
+      string = string.split(item[0]).join('');
     }
 
     // 2. look for sub-templates
