@@ -1,7 +1,7 @@
 const assert = require('assert'),
   css = require('../../bin/builder.js').css;
 
-describe('css builder', () => {
+describe('builder.css', () => {
   describe('css.mapFile', () => {
     it('should get map file and its dependencies', done => {
       css.mapFile('./tests/resources/file2.scss')
