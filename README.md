@@ -205,6 +205,30 @@ the variable that will be checked is sub.isVisible (and not main.isVisible). Thi
 
 It is important to note that each sub-section will go through the entire process before combining all elements together (meaning part-i will be translated before part-ii will iterate its loop)
 
+
+## DOMinion
+DOMinion is a DOM updater. it gets to node tree and update the first tree while keep all existing relevant nodes intact.
+
+### DOMinion.update
+```
+DOMinion.update(current, plan)
+```
+
+### DOMinion.map
+```
+DOMinion.map(tree)
+```
+Map is a helper function, return a Map object with ```id=>{ node, parentId, children[id] }```. 
+Consider the following tree -
+```
+<ul id="list">
+  <li name="item"><a href="yy"><img src="xx" /></a></li>
+  <li><div>item 2</div></li>
+</ul>
+```
+A node's id is based on the tagName and its id attribute (```ul#list```), or name (```li|name:item```), or src (```img|src:xx```), or href (```a|href:yy```), 
+or its content (```div=item2```), or it's parent-id (```ul#list>li[1]``` or ```div=item2>Text[0]```).
+
 ## Additional notes
 - I'm not really using [hoek](https://www.npmjs.com/package/hoek), but it's being using by some dependecies and I must
 force it to its latest version as earlier ones have security issues
