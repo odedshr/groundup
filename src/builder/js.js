@@ -3,19 +3,20 @@ import babel from 'babel-core';
 import UglifyJS from 'uglify-js';
 import mapNested from './map-nested.js';
 
-const importPattern = `import.*(["\\'])(.*\\.js)\\1`;
+const importPattern = `import.*(["\\'])(.*\\.js)\\1`,
+  defaultFormat = 'cjs';
   
 export default {
    /**
    * Returns a promise for a merged, transpiled and uglified version of an es6 file
    * @param {String} fileName of scss file
    */
-  compile(fileName) {
+  compile(fileName ,format = defaultFormat) {
     if (!Array.isArray(fileName)) {
       fileName = [ fileName ];
     }
 
-    return this.loadFiles(fileName)
+    return this.loadFiles(fileName, format)
       .then(fileSet => {
         if(fileSet.content.length === 0) {
           return fileSet;
@@ -64,7 +65,7 @@ export default {
    * @param {String[]} input list of files to load
    * @param {String} format of output files (default is 'cjs')
    */  
-  loadFiles(input, format = 'cjs') {
+  loadFiles(input, format = defaultFormat) {
     return Promise
       .all(input.map(file => this.loadFile(file, format)))
       .then(res => res.reduce((memo, item) => {
@@ -79,7 +80,7 @@ export default {
   * @param {String} input filename
   * @param {String} format of output files (default is 'cjs')* 
   */
-  loadFile(input, format = 'cjs') {
+  loadFile(input, format = defaultFormat) {
     return rollup.rollup({ input })
       .then(bundle => bundle.generate({ format }))
       .then (result => ({

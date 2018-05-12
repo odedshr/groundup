@@ -123,7 +123,7 @@ function getFileType(fileName) {
  * @param {String} triggeredByFile a source file which was deleted (and should be removed from target folder)
  */
 function writeToFile(targetPath, targetFileName, sourceFile, fileTypeDef, triggeredByFile) {
-  let absoluteTarget = getAbsolutePath(targetPath, targetFileName);
+  let { path: absoluteTarget, args } = extractArgumentsFromPath(getAbsolutePath(targetPath, targetFileName));
 
   if (fileTypeDef.id === 'files') {
     if (triggeredByFile !== undefined) {
@@ -131,13 +131,25 @@ function writeToFile(targetPath, targetFileName, sourceFile, fileTypeDef, trigge
     }
     return files.copy(sourceFile, getAbsolutePath(targetPath, targetFileName));
   } else {
-    return fileTypeDef.handler.compile(sourceFile)
+    return fileTypeDef.handler.compile(sourceFile, ...args)
       .then(response => {
         files.addPath(absoluteTarget.substring(0, absoluteTarget.lastIndexOf('/')));
         writeFileSync(absoluteTarget, response.content);
         return response;
       })
   }
+}
+
+/**
+ * extracts path and array of strings from a compouneded string whereas items are seperated by a delimiter
+ * If there are additional ';;' they'll be treated like a single semi-color
+ * for example: path/file.js;;param1;param2 == path/file.js;;param1;;param2
+ * @param {String} compoundedString
+ * @param {String} delimiter
+ */
+function extractArgumentsFromPath(compoundedString, delimiter = ';') {
+  let [path, ...args] = compoundedString.split(delimiter);
+  return { path, args };
 }
 
 /**

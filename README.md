@@ -6,8 +6,11 @@
 [![MIT License](https://img.shields.io/github/license/odedshr/groundup.svg)](https://github.com/odedshr/groundup/blob/master/LICENSE)
 [![Version](https://img.shields.io/npm/v/groundup.svg)](https://www.npmjs.com/package/groundup)
 
-Backgroud scripts and tools for my applications
-
+GroundUp are a set of tools I found myself using over and over so I figured I might create them in a generic package 
+I can simply reuse. For now, this project contains libraries for 3 scenarios:
+1. Compilation tools (builder)
+2. Backend tools (HTMLCompiler)
+3. Frontend, aka browser, tools (HTMLCompiler + DOMinion)
 
 ## Installation
 Install with npm:
