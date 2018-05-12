@@ -26,9 +26,14 @@ describe('builder.files', () => {
       assert.equal(fs.existsSync('tests/dist/subfolder/file2.1.html'), true);
     });
 
+    it('should copy folder with a subfolder to target folder', () => {
+      files.copy('tests/resources/subfolder', 'tests/dist/');
+      assert.equal(fs.existsSync('tests/dist/subfolder/file2.1.html'), true);
+    });
+
     it('should copy file withing folder to target folder', () => {
-      files.copy('tests/resources/subfolder/file2.1.html', 'tests/dist/');
-      assert.equal(fs.existsSync('tests/dist/file2.1.html'), true);
+      files.copy('tests/resources/subfolder', 'tests/dist/');
+      assert.equal(fs.existsSync('tests/dist/subfolder/subfolder2/file3.html'), true);
     });
   });
 });

@@ -2,13 +2,19 @@ import { copyFileSync, existsSync, mkdirSync, lstatSync, readdirSync, statSync, 
 import glob from 'glob';
 
 /**
- * Return the file's target path by merging by omitting merging the string and ommitting the file's actual name
+ * Return the file's target path by merging by replacing the sourcePath with targetPath
+ * If source path contains /** /*.*' it is ignored
  * @param {String} file 
+ * @param {String} sourcePath
  * @param {String} targetPath 
  */
-function getFileTargt (file, targetPath) {
+function getFileTargt (file, sourcePath, targetPath) {
+  if (file === sourcePath) {
+    return targetPath + file.substr(file.lastIndexOf('/'));
+  }
+
   if (targetPath.match(/\/$/)) {
-    return targetPath + file.substr(file.lastIndexOf('/') + 1);
+    return targetPath + file.replace(sourcePath.replace('/**/*.*', '') + '/', '');
   }
 
   return targetPath;
@@ -21,31 +27,37 @@ export default {
    * @param {String} target 
    */
   copy(source, target) {
-    let sources = Array.isArray(source) ? source : [source];
+    const handleFile = (task, file) => {
+      let fileTarget = getFileTargt(file, task.source, task.target);
+
+      if (lstatSync(file).isDirectory()) {
+        this.addPath(fileTarget);
+        sources.push({ source: `${file}/**/*.*`, target: fileTarget + '/'});
+      } else {
+        promises.push(new Promise((resolve, reject) => {
+          this.addFilePath(fileTarget);
+          let err = copyFileSync(file, fileTarget);
+          if (err) {
+            console.error(`GroundUp:copyFileSync failed: ${file} => ${fileTarget}`);
+            reject(err);
+          } else {
+            resolve();
+          }
+        }));
+      }
+    };
+
+    let sources = Array.isArray(source) ? source.map( source=> ({ source, target })) : [{ source, target }],
+      promises = [];
 
     this.addPath(target.substring(0, target.lastIndexOf('/')));
 
-    return Promise.all(sources.map(source => {
-      glob.sync(source, {})
-        .forEach(file => {
-          let fileTarget = getFileTargt(file, target);
+    while (sources.length) {
+      let task = sources.pop();
+      glob.sync(task.source, {}).forEach(handleFile.bind({}, task));
+    }
 
-          if (lstatSync(file).isDirectory()) {
-            this.addPath(fileTarget);
-            return this.copy(file + '/*.*', fileTarget + '/');
-          } else {
-            return new Promise((resolve, reject) => {
-              let err = copyFileSync(file, fileTarget);
-              if (err) {
-                console.error(`GroundUp:copyFileSync failed: ${file} => ${fileTarget}`);
-                reject(err);
-              } else {
-                resolve();
-              }
-            });
-          }
-        });
-    }));
+    return Promise.all(promises);
   },
 
   /**
@@ -56,7 +68,7 @@ export default {
     return new Promise(resolve => resolve(glob.sync(fileName, {})));
   },
 
-    /**
+  /**
    * Verifies path exists by creating each folder if not already exists
    * @param {String} path 
    */
@@ -72,6 +84,23 @@ export default {
     }, '');
   },
   
+  /**
+   * Verifies a path of a file exists by creating each folder if not already exists
+   * This means that the last element in the string will not be created as a folder (as it is a file)
+   * @param {String} filePath 
+   */
+  addFilePath(filePath) {
+    filePath.split('/').slice(0,-1).reduce((acc, folder) => {
+      acc += folder;
+
+      // when path is absolute ('/Volumes...') the first acc ==='' so we shouldn't try to create it
+      if (acc.length && !existsSync(acc)) {
+        mkdirSync(acc);
+      }
+      return acc + '/';
+    }, '');
+  },
+
   /**
    * Removes a file or folder and its content recursively
    * @param {String} path 
