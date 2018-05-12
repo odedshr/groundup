@@ -1,6 +1,6 @@
 const external = ['fs', 'postcss','autoprefixer','clean-css','node-sass','html-minifier','rollup','babel-core','uglify-js','glob'];
 
-export default [
+module.exports = [
   { input: './src/builder/builder-cli.js',
     external,
     output: {
