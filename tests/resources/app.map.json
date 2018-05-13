@@ -3,7 +3,11 @@
   "target": "tests/dist",
   "entries": {
     "entry.html": ["file1.html"],
-    "main.js": ["file1.js"],
+    "main.js": {
+      "source": ["file-with-external.js"],
+      "format": "es",
+      "external": "vue.js"
+    },
     "main.css": ["file1.scss", "file2.scss"],
     "webWorker.js": ["live-build-asset.js"],
     "static/": ["subfolder/"]

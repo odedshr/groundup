@@ -1,11 +1,11 @@
 /*global beforeEach */
 const assert = require('assert'),
   fs = require('fs'),
-  build = require('../../bin/builder.js').build;
+  build = require('../../dist/builder.js').build;
   
 
 describe('builder', () => {
-  describe('once()', () => {
+  xdescribe('once()', () => {
     it('should build a dist', done => {
       let appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8'));
 
@@ -17,7 +17,7 @@ describe('builder', () => {
             'static',
             'webWorker.js' ]));
       })
-      .catch (res => res)
+      .catch (err => err)
       .then(done);
     });
   });
@@ -32,6 +32,13 @@ describe('builder', () => {
           fs.unlinkSync(staticTestTarget);
         }
 
+    it('should obtain list of watches', done => {
+      build.live(appMap).then(watches => {
+        assert.equal(watches.map(watch => watch.file).join(),'/Volumes/docs/Dropbox/projects/groundup/tests/resources/file1.html,/Volumes/docs/Dropbox/projects/groundup/tests/resources/file1.1.html,/Volumes/docs/Dropbox/projects/groundup/tests/resources/file-with-external.js,/Volumes/docs/Dropbox/projects/groundup/tests/resources/file1.scss,/Volumes/docs/Dropbox/projects/groundup/tests/resources/file1.1.scss,/Volumes/docs/Dropbox/projects/groundup/tests/resources/file2.scss,/Volumes/docs/Dropbox/projects/groundup/tests/resources/subfolder/file2.1.scss,/Volumes/docs/Dropbox/projects/groundup/tests/resources/live-build-asset.js,/Volumes/docs/Dropbox/projects/groundup/tests/resources/live-build-asset-child.js,/Volumes/docs/Dropbox/projects/groundup/tests/resources/subfolder/');
+      })
+      .catch (err => err)
+      .then(done);      
+    });
     it('should update static after an update', done => {
       build.live(appMap).then(newWatches => {
         watches = newWatches;
@@ -41,7 +48,7 @@ describe('builder', () => {
           assert.equal(fs.existsSync(staticTestTarget), true);
         }, 1100);
       })
-      .catch (res => res)
+      .catch (err => err)
       .then(done);
     });
 
@@ -64,14 +71,14 @@ describe('builder', () => {
       build.live(appMap).then(watches => {
         assert.equal(watches.find(watch => (watch.file === fileName)) !== undefined, true);
       })
-      .catch (res => res)
+      .catch (err => err)
       .then(done);
     });
 
     /* This test turns on watchers, make a change in a file and checks whether the watcher has changed the time
     * At the moment, watcher response-time is arbitrary and so the test might fail to timeout error
     */
-    xit('should update build when js file udpates', done => {
+    it('should update build when js file udpates', done => {
       let appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8')),
         fileName = './tests/resources/live-build-asset-child.js',
         jsCode = fs.readFileSync(fileName, 'utf-8'),
@@ -89,7 +96,7 @@ describe('builder', () => {
           assert.equal(newFileContent.indexOf(uniqueString) > -1, true);
         }, 8000);
       })
-      .catch (res => res)
+      .catch (err => err)
       .then(done);
     });
   });

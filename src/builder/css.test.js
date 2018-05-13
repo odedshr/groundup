@@ -1,5 +1,5 @@
 const assert = require('assert'),
-  css = require('../../bin/builder.js').css;
+  css = require('../../dist/builder.js').css;
 
 describe('builder.css', () => {
   describe('css.mapFile', () => {

@@ -59,7 +59,7 @@ function getAbsolutePathes(path, entries) {
   let map = new Map();
 
   Object.keys(entries)
-    .forEach(entry => map.set(entry, entries[entry].map( file => getAbsolutePath(path, file))));
+    .forEach(entry => map.set(entry, getMappedEntries(path, entries[entry])));
 
   return map;
 }
@@ -72,7 +72,13 @@ function getAbsolutePathes(path, entries) {
  * @param {String} target folder
  */
 function getWatcherPromises(output, files, mapFunc, target) {
-  return files.map(file => mapFunc(file)
+  let external = [];
+
+  if (files.source) {
+    external = files.external;
+    files = files.source;
+  }
+  return files.map(file => mapFunc(file, external)
     .then(
       results => getWatchers(results, output, target)
     )
@@ -189,9 +195,31 @@ function once(appMap) {
     .map(entry => writeToFile(
         target,
         entry,
-        appMap.entries[entry].map(file => getAbsolutePath(source, file)),
+        getMappedEntries(source, appMap.entries[entry]),
         getFileType(entry))
       .catch(err => log(`skipping ${entry} due to error:`, err))));
+}
+
+/**
+ * return an array of source from app.map.json "entries" object
+ * @param {Object} entry 
+ */
+function getMappedEntries (source, entry) {
+  let sources;
+
+  if (entry instanceof Object) {
+    if (Array.isArray(entry)) {
+      sources = entry;
+    } else {
+      let entryCopy = { ...entry };
+      entryCopy.source = getMappedEntries(source, entryCopy.source);
+      return entryCopy;
+    }
+  } else {
+    sources = [entry];
+  }
+
+  return sources.map(file => getAbsolutePath(source, file));
 }
 
 /**

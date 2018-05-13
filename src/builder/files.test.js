@@ -1,7 +1,7 @@
 /*global afterEach */
 const assert = require('assert'),
   fs = require('fs'),
-  files = require('../../bin/builder.js').files;
+  files = require('../../dist/builder.js').files;
 
 describe('builder.files', () => {
   describe('files.copy()', () => {

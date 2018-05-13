@@ -12,17 +12,20 @@ const log = console.log,
     }
   },
 
-  mapNested = (fileName, importPattern) => {
+  mapNested = (fileName, importPattern, external = []) => {
     let files = Array.isArray(fileName) ? fileName : [ fileName ];
 
-    return files.map(file => mapSingleNested(file, importPattern))
+    return files.map(file => mapSingleNested(file, importPattern, external))
     .reduce((acc, item) => acc.concat(item), []);
   },
 
-  mapSingleNested = (fileName, importPattern) => {
+  mapSingleNested = (fileName, importPattern, external) => {
     const importRegex = new RegExp(importPattern,'mg');
 
     if (!fs.existsSync(fileName)) {
+      if (external.indexOf(fileName) > -1) {
+        return []; //files is an external, no need to check it
+      }
       throw errors.notFound('mapSingleNested', fileName);
     }
 
@@ -32,8 +35,8 @@ const log = console.log,
       match;
 
     while ((match = importRegex.exec(content)) !== null) {
-      if (files.indexOf(filePath + match[2]) === -1 ) {
-        files = files.concat(mapSingleNested(filePath + match[2].replace(/^\.\//,''), importPattern));
+      if (files.indexOf(filePath + match[2]) === -1 && external.indexOf(match[2]) === -1) {
+        files = files.concat(mapSingleNested(filePath + match[2].replace(/^\.\//,''), importPattern, external));
       }
     }
 
