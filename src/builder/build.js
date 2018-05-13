@@ -82,6 +82,7 @@ function getWatcherPromises(output, files, mapFunc, target) {
     .then(
       results => getWatchers(results, output, target)
     )
+    
   );
 }
 
@@ -142,7 +143,7 @@ function writeToFile(targetPath, targetFileName, sourceFile, fileTypeDef, trigge
         files.addPath(absoluteTarget.substring(0, absoluteTarget.lastIndexOf('/')));
         writeFileSync(absoluteTarget, response.content);
         return response;
-      })
+      });
   }
 }
 

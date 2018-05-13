@@ -5,9 +5,25 @@ const assert = require('assert'),
   
 
 describe('builder', () => {
-  xdescribe('once()', () => {
+  describe('once()', () => {
     it('should build a dist', done => {
       let appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8'));
+
+      build.once(appMap).then(() => {
+        assert.equal(JSON.stringify(fs.readdirSync(appMap.target)), 
+          JSON.stringify([ 'entry.html',
+            'main.css',
+            'main.js',
+            'static',
+            'webWorker.js' ]));
+      })
+      .catch (err => err)
+      .then(done);
+    });
+
+    it('should ignore a missing file in map', done => {
+      let appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8'));
+      appMap.entries['main.js'].source.push('this-file-dosnt-exists.js');
 
       build.once(appMap).then(() => {
         assert.equal(JSON.stringify(fs.readdirSync(appMap.target)), 
@@ -78,7 +94,7 @@ describe('builder', () => {
     /* This test turns on watchers, make a change in a file and checks whether the watcher has changed the time
     * At the moment, watcher response-time is arbitrary and so the test might fail to timeout error
     */
-    it('should update build when js file udpates', done => {
+    xit('should update build when js file udpates', done => {
       let appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8')),
         fileName = './tests/resources/live-build-asset-child.js',
         jsCode = fs.readFileSync(fileName, 'utf-8'),
