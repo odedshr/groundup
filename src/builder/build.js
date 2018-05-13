@@ -211,7 +211,7 @@ function getMappedEntries (source, entry) {
     if (Array.isArray(entry)) {
       sources = entry;
     } else {
-      let entryCopy = { ...entry };
+      let entryCopy = Object.assign({}, entry);
       entryCopy.source = getMappedEntries(source, entryCopy.source);
       return entryCopy;
     }

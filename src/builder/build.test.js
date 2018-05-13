@@ -34,7 +34,7 @@ describe('builder', () => {
 
     it('should obtain list of watches', done => {
       build.live(appMap).then(watches => {
-        assert.equal(watches.map(watch => watch.file).join(),'/Volumes/docs/Dropbox/projects/groundup/tests/resources/file1.html,/Volumes/docs/Dropbox/projects/groundup/tests/resources/file1.1.html,/Volumes/docs/Dropbox/projects/groundup/tests/resources/file-with-external.js,/Volumes/docs/Dropbox/projects/groundup/tests/resources/file1.scss,/Volumes/docs/Dropbox/projects/groundup/tests/resources/file1.1.scss,/Volumes/docs/Dropbox/projects/groundup/tests/resources/file2.scss,/Volumes/docs/Dropbox/projects/groundup/tests/resources/subfolder/file2.1.scss,/Volumes/docs/Dropbox/projects/groundup/tests/resources/live-build-asset.js,/Volumes/docs/Dropbox/projects/groundup/tests/resources/live-build-asset-child.js,/Volumes/docs/Dropbox/projects/groundup/tests/resources/subfolder/');
+        assert.equal(watches.map(watch => watch.file).join().replace(new RegExp(process.cwd(),'g'),''),'/tests/resources/file1.html,/tests/resources/file1.1.html,/tests/resources/file-with-external.js,/tests/resources/file1.scss,/tests/resources/file1.1.scss,/tests/resources/file2.scss,/tests/resources/subfolder/file2.1.scss,/tests/resources/live-build-asset.js,/tests/resources/live-build-asset-child.js,/tests/resources/subfolder/');
       })
       .catch (err => err)
       .then(done);      
