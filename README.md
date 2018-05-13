@@ -44,8 +44,12 @@ The application map is the set of instructions for the builder:
   "source": "src/",
   "target": "dist/",
   "entries": {
-    "index.html": ["file1.html"],
-    "main.js": ["file1.js", "tools.js"],
+    "index.html": "file1.html",
+    "main.js": {
+      "source": ["file1.js", "tools.js"],
+      "format": "es",
+      "external": "vue.js"
+    },
     "main.css": ["file1.scss", "file2.scss"],
     "webWorker.js": ["web-worker.js", "tools.js"],
     "static/": ["subfolder/"]
@@ -55,6 +59,8 @@ The application map is the set of instructions for the builder:
 - `source` serves as the baseline folder from which files should be copied
 - `target` serves as a baseline folder in which entries should be created
 - `entries` is a map of target files (html, css, js or files and folders that should be copied as-is) and sources
+  - entry can be a simple string ("file1.html"), an array of strings ("["file1.js", "tools.js"]"); or an object with 
+    `format` (amd, cjs, es, iife, umd), `external` (array of files that will not be bundled) and source (string or array of strings as before)
 
 ## Builder
 ```
