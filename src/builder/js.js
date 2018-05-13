@@ -1,9 +1,17 @@
 import rollup from 'rollup';
+import resolve from 'rollup-plugin-node-resolve';
 import babel from 'babel-core';
 import UglifyJS from 'uglify-js';
 import mapNested from './map-nested.js';
 
 const importPattern = `import.*(["\\'])(.*\\.js)\\1`,
+  plugins = [
+    resolve({
+      module: true,
+      main: true,
+      preferBuiltins: false
+    })
+  ],
   defaultFormat = 'cjs';
   
 export default {
@@ -99,7 +107,7 @@ export default {
   * @param {String} format of output files (default is 'cjs')* 
   */
   loadFile(input, format = defaultFormat, external = []) {
-    return rollup.rollup({ input, external })
+    return rollup.rollup({ input, external, plugins })
       .then(bundle => bundle.generate({ format }))
       .then (result => ({
         files: result.modules,
