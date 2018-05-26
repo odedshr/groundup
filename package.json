@@ -1,19 +1,45 @@
 {
-  "name": "groundup",
-  "version": "1.3.2",
-  "description": "Background scripts and tools for my apps",
-  "main": "dist/groundup.js",
-  "scripts": {
-    "test": "./node_modules/mocha/bin/mocha src/**/*.test.js --exit",
-    "build": "node ./src/builder-facade/Builder.js ./src/app.map.json",
-    "postinstall": "node ./postinstall.js"
+  "_from": "groundup@^1.3.2",
+  "_id": "groundup@1.3.2",
+  "_inBundle": false,
+  "_integrity": "sha512-ZzPAvTzANok33TCKGp4I7sziQrTp714zo+J0rIMzy2XGofD8tUL2Ojkni43JXNz2IwXFn8oR/AomzNQbysEs0g==",
+  "_location": "/groundup",
+  "_phantomChildren": {
+    "browser-stdout": "1.3.1",
+    "debug": "3.1.0",
+    "diff": "3.5.0",
+    "escape-string-regexp": "1.0.5",
+    "glob": "7.1.2",
+    "growl": "1.10.3",
+    "he": "1.1.1",
+    "minimatch": "3.0.4",
+    "mkdirp": "0.5.1"
   },
-  "author": "Oded Sharon",
-  "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/odedshr/groundup.git"
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "groundup@^1.3.2",
+    "name": "groundup",
+    "escapedName": "groundup",
+    "rawSpec": "^1.3.2",
+    "saveSpec": null,
+    "fetchSpec": "^1.3.2"
   },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/groundup/-/groundup-1.3.2.tgz",
+  "_shasum": "694bc54d5ec5e96459e81a50d16ec0f329350a93",
+  "_spec": "groundup@^1.3.2",
+  "_where": "/Users/sharon/Documents/maps/mapviewer",
+  "author": {
+    "name": "Oded Sharon"
+  },
+  "bugs": {
+    "url": "https://github.com/odedshr/groundup/issues"
+  },
+  "bundleDependencies": false,
   "dependencies": {
     "autoprefixer": "^8.0.0",
     "babel-core": "^6.26.0",
@@ -29,5 +55,21 @@
     "rollup-plugin-node-resolve": "^3.3.0",
     "uglify-js": "^3.3.12",
     "xmldom": "^0.1.27"
-  }
+  },
+  "deprecated": false,
+  "description": "Background scripts and tools for my apps",
+  "homepage": "https://github.com/odedshr/groundup#readme",
+  "license": "ISC",
+  "main": "dist/groundup.js",
+  "name": "groundup",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/odedshr/groundup.git"
+  },
+  "scripts": {
+    "build": "node ./src/builder-facade/Builder.js ./src/app.map.json",
+    "postinstall": "node ./postinstall.js",
+    "test": "./node_modules/mocha/bin/mocha src/**/*.test.js --exit"
+  },
+  "version": "1.3.2"
 }

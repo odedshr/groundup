@@ -58,9 +58,7 @@ const log = console.log,
     const importRegex = new RegExp(importPattern,'mg');
 
     if (!fs.existsSync(fileName)) {
-      log(errors.notFound('loadSingleNested', fileName));
-
-      return { files: [], content: ''};
+      throw errors.notFound('loadSingleNested', fileName);
     }
 
     let files = [ fileName ],
@@ -70,10 +68,18 @@ const log = console.log,
 
     while ((match = importRegex.exec(content)) !== null) {
       if (files.indexOf(filePath + match[2]) === -1 ) {
-        let child = loadSingleNested(filePath + match[2], importPattern);
-        content = content.replace(match[0], child.content);
-        files = files.concat(child.files);
+        try {
+          let child = loadSingleNested(filePath + match[2], importPattern);
+
+          content = content.replace(match[0], child.content);
+          files = files.concat(child.files);
+        }
+        catch (err) {
+          log(err);
+        }
       }
+      // be sure to reset the regex index not to mess it up with empty files
+      importRegex.lastIndex = 0;
     }
 
     return { files, content };

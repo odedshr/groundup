@@ -1,17 +1,9 @@
 import rollup from 'rollup';
-import resolve from 'rollup-plugin-node-resolve';
 import babel from 'babel-core';
 import UglifyJS from 'uglify-js';
 import mapNested from './map-nested.js';
 
 const importPattern = `import.*(["\\'])(.*\\.js)\\1`,
-  plugins = [
-    resolve({
-      module: true,
-      main: true,
-      preferBuiltins: false
-    })
-  ],
   defaultFormat = 'cjs';
   
 export default {
@@ -26,6 +18,7 @@ export default {
   compile(options) {
     let filenames,
       external = [],
+      globals = {},
       format = defaultFormat;
     if (options instanceof Object) {
       if (Array.isArray(options)) {
@@ -36,13 +29,14 @@ export default {
         filenames = Array.isArray(options.source) ? [...options.source] : [options.source];
         external = options.external || external;
         format = options.format || format;
+        globals = options.globals || globals;
       }
     } else {
       //options is just a string
       filenames = [ options ];
     }
 
-    return this.loadFiles(filenames, format, external)
+    return this.loadFiles(filenames, format, external, globals)
       .then(fileSet => {
         if(fileSet.content.length === 0) {
           return fileSet;
@@ -52,6 +46,10 @@ export default {
           .then(this.minify)
           .then(transpiledAndUglified => {
             fileSet.content = transpiledAndUglified;
+            return fileSet;
+          })
+          .catch(err => {
+            console.error('build.js.transpile: ', err);
             return fileSet;
           });
       });
@@ -82,8 +80,8 @@ export default {
   * Returns a promise for a list of all files linked by `import` to the input file
   * @param {String} fileName 
   */
-  mapFile(fileName, external = []) {
-    return new Promise(resolve => resolve(mapNested(fileName, importPattern, external)));
+  mapFile(fileName, options = []) {
+    return new Promise(resolve => resolve(mapNested(fileName, importPattern, options)));
   },
   
   /**
@@ -91,9 +89,9 @@ export default {
    * @param {String[]} input list of files to load
    * @param {String} format of output files (default is 'cjs')
    */  
-  loadFiles(input, format = defaultFormat, external = []) {
+  loadFiles(input, format = defaultFormat, external = [], globals = {}) {
     return Promise
-      .all(input.map(file => this.loadFile(file, format, external)))
+      .all(input.map(file => this.loadFile(file, format, external, globals)))
       .then(res => res.reduce((memo, item) => {
         memo.files = memo.files.concat(item.files);
         memo.content += item.content;
@@ -106,9 +104,9 @@ export default {
   * @param {String} input filename
   * @param {String} format of output files (default is 'cjs')* 
   */
-  loadFile(input, format = defaultFormat, external = []) {
-    return rollup.rollup({ input, external, plugins })
-      .then(bundle => bundle.generate({ format }))
+  loadFile(input, format = defaultFormat, external = [], globals = {}) {
+    return rollup.rollup({ input, external })
+      .then(bundle => bundle.generate({ format, globals }))
       .then (result => ({
         files: result.modules,
         content: result.code

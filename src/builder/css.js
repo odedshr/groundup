@@ -27,6 +27,10 @@ export default {
         fileSet.content = compiledAndMinified;
         return fileSet;
       });
+    })
+    .catch(err => {
+      console.error(`failed to compile ${fileName}: ${err}`);
+      return err;
     });
   },
 

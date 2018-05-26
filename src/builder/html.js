@@ -15,10 +15,11 @@ export default {
       if(fileSet.content.length === 0) {
         return fileSet;
       }
-
+      
       return this.minify(fileSet.content)
         .then(minified => {
           fileSet.content = minified;
+
           return fileSet;
         });
     });

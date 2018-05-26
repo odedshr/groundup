@@ -7,6 +7,7 @@ import js from './js.js';
 import files from './files.js';
   
 const log = console.log,
+  WATCH_TIMEOUT = 2000,
 
   types = new Map([['js', { regExp: /\.js$/, id: 'js', handler: js }],
     ['css', { regExp: /\.css$/, id: 'css', handler: css }],
@@ -19,9 +20,15 @@ const log = console.log,
  * @param {Function} method 
  */
 function logged(label, method) {
+  const time = new Date();
+  label =  `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:${padTwoDigits(time.getSeconds())} ${label}`;
   console.time(label);
   method();
   console.timeEnd(label);
+}
+
+function padTwoDigits(num) {
+  return ('00' + num).slice(-2);
 }
 
 /**
@@ -72,15 +79,16 @@ function getAbsolutePathes(path, entries) {
  * @param {String} target folder
  */
 function getWatcherPromises(output, files, mapFunc, target) {
-  let external = [];
+  let options, external;
 
   if (files.source) {
-    external = files.external;
+    options = files;
+    external = options.external;
     files = files.source;
   }
   return files.map(file => mapFunc(file, external)
     .then(
-      results => getWatchers(results, output, target)
+      results => getWatchers(file, results, output, target, options)
     )
     
   );
@@ -92,22 +100,34 @@ function getWatcherPromises(output, files, mapFunc, target) {
  * @param {String} output file name 
  * @param {String} target path
  */
-function getWatchers(files, output, target) {
+function getWatchers(rootFile, files, output, target, options) {
   return files.map(
-    file => ({
-      file,
-      watcher: watch(file, 
-        (eventType, triggering) => logged(`${colors.FgGreen}✓${colors.Reset} ${colors.Dim}Recompiled${colors.Reset} ` +
-        `${colors.FgCyan}${output}${colors.Reset}`, 
-        () => writeToFile(
-          target,
-          output,
-          files,
-          getFileType(output),
-          triggering
-        )
-      ))
-    })
+    file => {
+      let timeOut; // fs.watch tends to run twice so we'll debounce it using a timeout
+
+      return {
+        file,
+        options,
+        watcher: watch(file, 
+          (eventType, triggering) => {
+            if (!timeOut) {
+              timeOut = setTimeout(() => {
+                logged(`${colors.FgGreen}✓${colors.Reset} ${colors.Dim}Recompiled${colors.Reset} ` +
+                  `${colors.FgCyan}${output}${colors.Reset}`, 
+                  writeToFile.bind({},
+                    target,
+                    output,
+                    options || rootFile,
+                    getFileType(output),
+                    triggering
+                  )
+                );
+                timeOut = null;
+                }, WATCH_TIMEOUT);
+            }
+          })
+      }
+    }
   );
 }
 
@@ -130,7 +150,7 @@ function getFileType(fileName) {
  * @param {String} triggeredByFile a source file which was deleted (and should be removed from target folder)
  */
 function writeToFile(targetPath, targetFileName, sourceFile, fileTypeDef, triggeredByFile) {
-  let { path: absoluteTarget, args } = extractArgumentsFromPath(getAbsolutePath(targetPath, targetFileName));
+  let absoluteTarget = getAbsolutePath(targetPath, targetFileName);
 
   if (fileTypeDef.id === 'files') {
     if (triggeredByFile !== undefined) {
@@ -138,25 +158,13 @@ function writeToFile(targetPath, targetFileName, sourceFile, fileTypeDef, trigge
     }
     return files.copy(sourceFile, getAbsolutePath(targetPath, targetFileName));
   } else {
-    return fileTypeDef.handler.compile(sourceFile, ...args)
+    return fileTypeDef.handler.compile(sourceFile)
       .then(response => {
         files.addPath(absoluteTarget.substring(0, absoluteTarget.lastIndexOf('/')));
         writeFileSync(absoluteTarget, response.content);
         return response;
       });
   }
-}
-
-/**
- * extracts path and array of strings from a compouneded string whereas items are seperated by a delimiter
- * If there are additional ';;' they'll be treated like a single semi-color
- * for example: path/file.js;;param1;param2 == path/file.js;;param1;;param2
- * @param {String} compoundedString
- * @param {String} delimiter
- */
-function extractArgumentsFromPath(compoundedString, delimiter = ';') {
-  let [path, ...args] = compoundedString.split(delimiter);
-  return { path, args };
 }
 
 /**
@@ -194,11 +202,12 @@ function once(appMap) {
 
   return Promise.all(Object.keys(appMap.entries)
     .map(entry => writeToFile(
-        target,
-        entry,
-        getMappedEntries(source, appMap.entries[entry]),
-        getFileType(entry))
-      .catch(err => log(`skipping ${entry} due to error:`, err))));
+      target,
+      entry,
+      getMappedEntries(source, appMap.entries[entry]),
+      getFileType(entry))
+    .catch(err => log(`skipping ${entry} due to error:`, err))));
+     
 }
 
 /**
