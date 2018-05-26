@@ -237,7 +237,3 @@ Consider the following tree -
 ```
 A node's id is based on the tagName and its id attribute (```ul#list```), or name (```li|name:item```), or src (```img|src:xx```), or href (```a|href:yy```), 
 or its content (```div=item2```), or it's parent-id (```ul#list>li[1]``` or ```div=item2>Text[0]```).
-
-## Additional notes
-- I'm not really using [hoek](https://www.npmjs.com/package/hoek), but it's being using by some dependecies and I must
-force it to its latest version as earlier ones have security issues
