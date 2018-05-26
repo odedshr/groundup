@@ -70,5 +70,5 @@
     "postinstall": "node ./postinstall.js",
     "test": "./node_modules/mocha/bin/mocha src/**/*.test.js --exit"
   },
-  "version": "1.3.3"
+  "version": "1.3.4"
 }
