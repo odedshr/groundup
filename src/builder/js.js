@@ -2,6 +2,7 @@ import rollup from 'rollup';
 import babel from 'babel-core';
 import UglifyJS from 'uglify-js';
 import mapNested from './map-nested.js';
+import colors from '../etc/console-colors.js';
 
 const importPattern = `import.*(["\\'])(.*\\.js)\\1`,
   defaultFormat = 'cjs';
@@ -110,6 +111,12 @@ export default {
       .then (result => ({
         files: result.modules,
         content: result.code
-      }));
+      }))
+      .catch(err => {
+        console.error(`${ colors.FgRed }ERROR LOADING ${ colors.FgWhite }${ input }\n${ colors.FgBlack + colors.Bright }`, 
+          err, 
+          colors.Reset);
+        return { files: [], content: '' };
+      });
   }
 };

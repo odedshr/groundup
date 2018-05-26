@@ -1,5 +1,5 @@
 import fs  from 'fs';
-import errors  from '../etc/errors.js';
+import colors from '../etc/console-colors.js';
 
 const log = console.log,
 
@@ -23,10 +23,10 @@ const log = console.log,
     const importRegex = new RegExp(importPattern,'mg');
 
     if (!fs.existsSync(fileName)) {
-      if (external.indexOf(fileName) > -1) {
-        return []; //files is an external, no need to check it
+      if (external.indexOf(fileName) === -1) {
+        consoleErrorMissingFile(fileName);
       }
-      throw errors.notFound('mapSingleNested', fileName);
+      return [];
     }
 
     let files = [ fileName ],
@@ -58,7 +58,8 @@ const log = console.log,
     const importRegex = new RegExp(importPattern,'mg');
 
     if (!fs.existsSync(fileName)) {
-      throw errors.notFound('loadSingleNested', fileName);
+      consoleErrorMissingFile(fileName);
+      return { files: [], content: '' };
     }
 
     let files = [ fileName ],
@@ -83,6 +84,10 @@ const log = console.log,
     }
 
     return { files, content };
+  },
+
+  consoleErrorMissingFile = (fileName) => {
+    console.error(`${ colors.FgRed }ERROR LOADING MISSING FILE ${ colors.FgWhite }${ fileName }\n${ colors.Reset }`);
   };
 
 mapNested.load = loadNested;

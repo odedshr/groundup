@@ -11,6 +11,15 @@ describe('builder.css', () => {
       })
       .catch(done);
     });
+
+    it('should ignore missing dependenceis', done => {
+      css.mapFile('./tests/resources/missing-import.scss')
+      .then(output => {
+        assert.equal(JSON.stringify(output), '["./tests/resources/missing-import.scss","./tests/resources/subfolder/file2.1.scss"]');
+        done();
+      })
+      .catch(done);
+    });
   });
 
   describe('css.loadFile', () => {
@@ -27,6 +36,15 @@ describe('builder.css', () => {
       css.loadFile('./tests/resources/file2.scss')
       .then(output => {
         assert.equal(output.content, 'h4 { color: green; }\n\nh3 { color: red; }');
+        done();
+      })
+      .catch(done);
+    });
+
+    it('should ignore missing dependenceis', done => {
+      css.loadFile('./tests/resources/missing-import.scss')
+      .then(output => {
+        assert.equal(output.content, 'h4 { color: green; }\n\n\nh1 { color: red; }');
         done();
       })
       .catch(done);
@@ -89,6 +107,15 @@ describe('builder.css', () => {
       css.compile('./tests/resources/file1.scss')
       .then(output => {
         assert.equal(output.content, 'h2{color:green}h1{color:red}');
+        done();
+      })
+      .catch(done);
+    });
+
+    it('should compile a file with an error', done => {
+      css.compile('./tests/resources/file-with-error.scss')
+      .then(error => {
+        assert.equal(error.message, 'Invalid CSS after "... color: blue; }": expected "}", was ""');
         done();
       })
       .catch(done);

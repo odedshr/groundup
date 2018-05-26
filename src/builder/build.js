@@ -126,7 +126,7 @@ function getWatchers(rootFile, files, output, target, options) {
                 }, WATCH_TIMEOUT);
             }
           })
-      }
+      };
     }
   );
 }
