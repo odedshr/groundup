@@ -12,7 +12,7 @@ describe('builder.css', () => {
       .catch(done);
     });
 
-    it('should ignore missing dependenceis', done => {
+    it('should ignore missing dependencies', done => {
       css.mapFile('./tests/resources/missing-import.scss')
       .then(output => {
         assert.equal(JSON.stringify(output), '["./tests/resources/missing-import.scss","./tests/resources/subfolder/file2.1.scss"]');

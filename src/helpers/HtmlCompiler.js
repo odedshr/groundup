@@ -40,7 +40,7 @@ import errors from '../etc/errors.js';
 
   function render (templates, locale, data, templateName) {
     if (templates[templateName] === undefined) {
-      throw errors.notFound('template not found', templateName);
+      throw new errors.NotFound('template not found', templateName);
     }
 
     return populate(templates, locale, data, templates[templateName]);
@@ -110,7 +110,7 @@ import errors from '../etc/errors.js';
             array.push(populate(templates, locale, value, item[5]));
           }
         } else {
-          throw errors.badInput('bad iterator', item[1]);
+          throw new errors.BadInput('bad iterator', item[1]);
         }
       }
 
@@ -256,11 +256,11 @@ class HTMLCompiler {
    */
   constructor(domParser, xmlSerializer) {
     if (domParser === undefined) {
-      throw errors.missingInput('domParser');
+      throw new errors.MissingInput('domParser');
     }
 
     if (xmlSerializer === undefined) {
-      throw errors.missingInput('xmlSerializer');
+      throw new errors.MissingInput('xmlSerializer');
     }
 
     this.domParser = domParser;

@@ -39,7 +39,7 @@ function padTwoDigits(num) {
  */
 function readMapFile(fileName) {
   if (!existsSync(fileName)) {
-    throw errors.notFound('map.json', fileName);
+    throw new errors.NotFound('map.json', fileName);
   }
 
   return JSON.parse(readFileSync(fileName, 'utf-8'));
