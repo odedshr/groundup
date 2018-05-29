@@ -6,7 +6,7 @@ import html from './html.js';
 import js from './js.js';
 import files from './files.js';
   
-const log = console.log,
+const defaultHandleError = (error) => console.error(error),
   WATCH_TIMEOUT = 2000,
 
   types = new Map([['js', { regExp: /\.js$/, id: 'js', handler: js }],
@@ -78,7 +78,7 @@ function getAbsolutePathes(path, entries) {
  * @param {Function} mapFunc 
  * @param {String} target folder
  */
-function getWatcherPromises(output, files, mapFunc, target) {
+function getWatcherPromises(output, files, mapFunc, target, handleError) {
   let options, external;
 
   if (files.source) {
@@ -88,7 +88,7 @@ function getWatcherPromises(output, files, mapFunc, target) {
   }
   return files.map(file => mapFunc(file, external)
     .then(
-      results => getWatchers(file, results, output, target, options)
+      results => getWatchers(file, results, output, target, options, handleError)
     )
     
   );
@@ -100,7 +100,7 @@ function getWatcherPromises(output, files, mapFunc, target) {
  * @param {String} output file name 
  * @param {String} target path
  */
-function getWatchers(rootFile, files, output, target, options) {
+function getWatchers(rootFile, files, output, target, options, handleError) {
   return files.map(
     file => {
       let timeOut; // fs.watch tends to run twice so we'll debounce it using a timeout
@@ -121,6 +121,7 @@ function getWatchers(rootFile, files, output, target, options) {
                     getFileType(output),
                     triggering
                   )
+                  .catch(handleError)
                 );
                 timeOut = null;
                 }, WATCH_TIMEOUT);
@@ -189,28 +190,6 @@ function removeFileIfRedundant(file, entries, destPath) {
 }
 
 /**
- * Builds destination folder according to appMap description
- * @param {Object} appMap OR filename
- */
-function once(appMap) {
-  if (typeof appMap === 'string') {
-    appMap = readMapFile(appMap);
-  }
-
-  let source = appMap.source || '',
-      target = appMap.target || '';
-
-  return Promise.all(Object.keys(appMap.entries)
-    .map(entry => writeToFile(
-      target,
-      entry,
-      getMappedEntries(source, appMap.entries[entry]),
-      getFileType(entry))
-    .catch(err => log(`skipping ${entry} due to error:`, err))));
-     
-}
-
-/**
  * return an array of source from app.map.json "entries" object
  * @param {Object} entry 
  */
@@ -232,11 +211,32 @@ function getMappedEntries (source, entry) {
   return sources.map(file => getAbsolutePath(source, file));
 }
 
+ /**
+   * Builds destination folder according to appMap description
+   * @param {Object} appMap OR filename
+   */
+function once(appMap, handleError = defaultHandleError) {
+  if (typeof appMap === 'string') {
+    appMap = readMapFile(appMap);
+  }
+
+  let source = appMap.source || '',
+      target = appMap.target || '';
+
+  return Promise.all(Object.keys(appMap.entries)
+    .map(entry => writeToFile(
+      target,
+      entry,
+      getMappedEntries(source, appMap.entries[entry]),
+      getFileType(entry))
+    .catch(handleError)));
+}
+
 /**
  * Creates watches to listen to sources files of appMap description
  * @param {Object} appMap OR filename
  */
-function live(appMap) {
+function live(appMap, handleError = defaultHandleError) {
   if (typeof appMap === 'string') {
     appMap = readMapFile(appMap);
   }
@@ -248,11 +248,43 @@ function live(appMap) {
     .map(entry => getWatcherPromises(entry,
       entries.get(entry),
       getFileType(entry).handler.mapFile,
-      target) )
+      target, handleError) )
     .reduce((acc, promise) => acc.concat(promise), [])
   ).then(watcheArrays => watcheArrays.reduce((acc, watches) => acc.concat(watches), []));
 }
 
-const builder = { once, live };
+class Build {
+  constructor() {
+    this.handleError = defaultHandleError;
+  }
 
-export { builder as default, once, live };
+  once(appMap) {
+    return once(appMap);
+  }
+
+  live(appMap) {
+    return live(appMap);
+  }
+
+    /** Sets a handler to call upon on error event
+   * @param {Function} handler delegate
+   */
+  onError(handler) {
+    this.handleError = handler;
+    css.onError(handler);
+    html.onError(handler);
+    js.onError(handler);
+  }
+
+  getFacade() {
+    return {
+      once: this.once.bind(this),
+      live: this.live.bind(this),
+      onError: this.onError.bind(this)
+    };
+  }
+}
+
+let build = (new Build()).getFacade();
+
+export { build as default, once, live };

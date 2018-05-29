@@ -47,6 +47,10 @@ class NotFound extends DetailedError {
   constructor(type, id) {
     super('not-found', 404, { key: type, value: id });
   }
+
+  toString() {
+    return `${ this.details.key } not Found: ${ this.details.value }`;
+  }
 }
 
 class NoPermissions extends DetailedError {
@@ -68,14 +72,22 @@ class System extends DetailedError {
 }
 
 class TooLong extends DetailedError {
-  constructor(varName, value) {
-    super('too-long', 406, { key: varName, value: value });
+  constructor(varName, value, max = '?') {
+    super('too-long', 406, { key: varName, value: value, max });
+  }
+
+  toString() {
+    return `${ this.details.key } is longer than ${ this.details.max } (${ this.details.value })`;
   }
 }
 
 class TooShort extends DetailedError {
-  constructor(varName, value) {
-    super('too-short', 406, { key: varName, value: value });
+  constructor(varName, value, min = '?') {
+    super('too-short', 406, { key: varName, value: value, min });
+  }
+
+  toString() {
+    return `${ this.details.key } is shorter than ${ this.details.min } (${ this.details.value })`;
   }
 }
 

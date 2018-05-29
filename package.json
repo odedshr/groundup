@@ -39,7 +39,7 @@
   "bugs": {
     "url": "https://github.com/odedshr/groundup/issues"
   },
-  "bundleDependencies": false,
+  "bundleDependencies": [],
   "dependencies": {
     "autoprefixer": "^8.0.0",
     "babel-core": "^6.26.0",
@@ -48,7 +48,7 @@
     "glob": "^7.1.2",
     "html-minifier": "^3.5.9",
     "mocha": "^5.0.1",
-    "node-sass": "https://github.com/sass/node-sass/tarball/v5",
+    "node-sass": "^4.9.0",
     "postcss": "^6.0.19",
     "rollup": "^0.58.2",
     "rollup-plugin-node-resolve": "^3.3.0",

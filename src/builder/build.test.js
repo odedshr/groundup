@@ -1,37 +1,35 @@
-/*global beforeEach */
+/*global xit */
 const assert = require('assert'),
   fs = require('fs'),
   build = require('../../dist/builder.js').build;
   
 
 describe('builder', () => {
+  const appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8')),
+    buildOutput = JSON.stringify([ 'entry.html',
+      'main.css',
+      'main.js',
+      'static',
+      'webWorker.js' ]);
+      
   describe('once()', () => {
     it('should build a dist', done => {
-      let appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8'));
-
       build.once(appMap).then(() => {
-        assert.equal(JSON.stringify(fs.readdirSync(appMap.target)), 
-          JSON.stringify([ 'entry.html',
-            'main.css',
-            'main.js',
-            'static',
-            'webWorker.js' ]));
+        assert.equal(JSON.stringify(fs.readdirSync(appMap.target)), buildOutput);
       })
       .catch (err => err)
       .then(done);
     });
 
     it('should ignore a missing file in map', done => {
-      let appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8'));
-      appMap.entries['main.js'].source.push('this-file-dosnt-exists.js');
+      const appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8'));
 
+      appMap.entries['main.js'].source.push('this-file-dosnt-exists.js');
+      build.onError(error => {
+        assert.equal(('' + error).replace(new RegExp(process.cwd(),'g'),''), 'Error: Could not resolve entry (/tests/resources/this-file-dosnt-exists.js)');
+      });
       build.once(appMap).then(() => {
-        assert.equal(JSON.stringify(fs.readdirSync(appMap.target)), 
-          JSON.stringify([ 'entry.html',
-            'main.css',
-            'main.js',
-            'static',
-            'webWorker.js' ]));
+        assert.equal(JSON.stringify(fs.readdirSync(appMap.target)), buildOutput);
       })
       .catch (err => err)
       .then(done);
@@ -40,7 +38,6 @@ describe('builder', () => {
 
   describe('live():static', () => {
     let staticTestTarget = `${process.cwd()}/tests/dist/static/timestamp.txt`,
-        appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8')),
         staticTestSource = `${process.cwd()}/tests/resources/subfolder/timestamp.txt`,
         watches = [];
 
@@ -50,11 +47,24 @@ describe('builder', () => {
 
     it('should obtain list of watches', done => {
       build.live(appMap).then(watches => {
-        assert.equal(watches.map(watch => watch.file).join().replace(new RegExp(process.cwd(),'g'),''),'/tests/resources/file1.html,/tests/resources/file1.1.html,/tests/resources/file-with-external.js,/tests/resources/file1.scss,/tests/resources/file1.1.scss,/tests/resources/file2.scss,/tests/resources/subfolder/file2.1.scss,/tests/resources/live-build-asset.js,/tests/resources/live-build-asset-child.js,/tests/resources/subfolder/');
+        let watchMap = watches.map(watch => watch.file).join().replace(new RegExp(process.cwd(),'g'),''),
+          expected = ['/tests/resources/file1.html',
+            '/tests/resources/file1.1.html',
+            '/tests/resources/file-with-external.js',
+            '/tests/resources/file1.scss',
+            '/tests/resources/file1.1.scss',
+            '/tests/resources/file2.scss',
+            '/tests/resources/subfolder/file2.1.scss',
+            '/tests/resources/live-build-asset.js',
+            '/tests/resources/live-build-asset-child.js',
+            '/tests/resources/subfolder/'].join();
+
+        assert.equal(watchMap, expected);
       })
       .catch (err => err)
       .then(done);      
     });
+
     it('should update static after an update', done => {
       build.live(appMap).then(newWatches => {
         watches = newWatches;

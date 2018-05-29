@@ -1,0 +1,4 @@
+@import "subfolder/file2.1.scss";
+@import "import-doesn't-exists.scss";
+
+h1 { color: red; }

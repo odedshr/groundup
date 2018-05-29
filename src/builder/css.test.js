@@ -13,6 +13,7 @@ describe('builder.css', () => {
     });
 
     it('should ignore missing dependencies', done => {
+      css.onError(err => assert.equal(err.details.value, './tests/resources/import-doesn\'t-exists.scss'));
       css.mapFile('./tests/resources/missing-import.scss')
       .then(output => {
         assert.equal(JSON.stringify(output), '["./tests/resources/missing-import.scss","./tests/resources/subfolder/file2.1.scss"]');
@@ -42,6 +43,7 @@ describe('builder.css', () => {
     });
 
     it('should ignore missing dependenceis', done => {
+      css.onError(err => assert.equal(err.details.value, './tests/resources/import-doesn\'t-exists.scss'));
       css.loadFile('./tests/resources/missing-import.scss')
       .then(output => {
         assert.equal(output.content, 'h4 { color: green; }\n\n\nh1 { color: red; }');
@@ -113,9 +115,10 @@ describe('builder.css', () => {
     });
 
     it('should compile a file with an error', done => {
+      css.onError(err => assert.equal(err.message, 'Invalid CSS after "... color: blue; }": expected "}", was ""'));
       css.compile('./tests/resources/file-with-error.scss')
-      .then(error => {
-        assert.equal(error.message, 'Invalid CSS after "... color: blue; }": expected "}", was ""');
+      .then(output => {
+        assert.equal(output.content, '');
         done();
       })
       .catch(done);

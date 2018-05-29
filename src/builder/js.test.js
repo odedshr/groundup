@@ -7,9 +7,8 @@ describe('builder.javascript', () => {
       js.mapFile('./tests/resources/file1.js')
       .then(output => {
         assert.equal(JSON.stringify(output), '["./tests/resources/file1.js","./tests/resources/file1.1.js"]');
-        done();
       })
-      .catch(done);
+      .then(done);
     });
   });
   
@@ -18,9 +17,8 @@ describe('builder.javascript', () => {
       js.loadFile('./tests/resources/file1.js')
       .then(output => {
         assert.equal(output.content.replace(/    /g,''), `'use strict';\n\nObject.defineProperty(exports, '__esModule', { value: true });\n\nlet foo = 2,\nbar = 3;\n\nfunction test() {\nconsole.log(foo + bar);\n}\n\nvar file1_1 = /*#__PURE__*/Object.freeze({\ntest: test\n});\n\nexports.child = file1_1;\n`);
-        done();
       })
-      .catch(done);
+      .then(done);
     });
 
     it('should get css file content with its imports embeded', done => {
@@ -28,9 +26,8 @@ describe('builder.javascript', () => {
       .then(output => {
         assert.equal(output.files.length, 2);
         assert.equal(output.files[1].replace(process.cwd(), '.'), './tests/resources/file1.js');
-        done();
       })
-      .catch(done);
+      .then(done);
     });
   });
 
@@ -39,18 +36,24 @@ describe('builder.javascript', () => {
       js.transpile('let foo = (a,b) => a + b;')
         .then(css => {
           assert.equal(css, '"use strict";\n\nvar foo = function foo(a, b) {\n  return a + b;\n};');
-          done();
         })
-        .catch(done);
+        .then(done);
     });
 
     it('should transpile es2015 to old javascript code and minify it', done => {
       js.transpile('let foo = (a,b) => a + b;', true)
         .then(css => {
           assert.equal(css, '"use strict";var foo=function foo(a,b){return a+b};');
-          done();
         })
-        .catch(done);
+        .then(done);
+    });
+
+    it('should refuse to transpile bad code', done => {
+      js.transpile('let foo = (a,b => a + b;')
+        .then(() => { assert.fail('should have failed'); }, error => {
+          assert.equal(error.message, 'unknown: Unexpected token, expected , (1:23)');
+        })
+        .then(done);
     });
   });
 
@@ -59,9 +62,16 @@ describe('builder.javascript', () => {
       js.minify('"use strict";\n\nvar foo = function foo(a, b) {\n  return a + b;\n};')
         .then(css => {
           assert.equal(css, '"use strict";var foo=function(r,t){return r+t};');
-          done();
         })
-        .catch(done);
+        .then(done);
+    });
+
+    it('should refuse to uglify bad code', done => {
+      js.minify('"use strict";\n\nvar foo = function foo(a, b {\n  return a + b;\n};')
+      .then(() => { assert.fail('should have failed'); }, error => {
+          assert.equal(error.message, 'Unexpected token punc «{», expected punc «,»');
+        })
+        .then(done);
     });
   });
 
@@ -70,18 +80,17 @@ describe('builder.javascript', () => {
       js.compile('./tests/./resources/file1.js')
       .then(output => {
         assert.equal(output.content, '"use strict";Object.defineProperty(exports,"__esModule",{value:!0});var foo=2,bar=3;function test(){console.log(foo+bar)}var file1_1=Object.freeze({test:test});exports.child=file1_1;');
-        done();
       })
-      .catch(done);
+      .then(done);
     });
 
     it('should fail to compile bad js file', done => {
+      js.onError(err => assert.equal(err.message,'Identifier \'x\' has already been declared'));
       js.compile('./tests/./resources/file-with-error.js')
       .then(output => {
         assert.equal(output.content, '');
-        done();
       })
-      .catch(done);
+      .then(done);
     });
   });
 });

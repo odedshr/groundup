@@ -7,9 +7,8 @@ describe('builder.html', () => {
       html.mapFile('./tests/resources/file2.html')
       .then(output => {
         assert.equal(JSON.stringify(output), '["./tests/resources/file2.html","./tests/resources/subfolder/file2.1.html"]');
-        done();
       })
-      .catch(done);
+      .then(done);
     });
   });
 
@@ -19,27 +18,24 @@ describe('builder.html', () => {
       .then(output => {
         assert.equal(output.files.length, 2);
         assert.equal(output.files[1], './tests/resources/file1.1.html');
-        done();
       })
-      .catch(done);
+      .then(done);
     });
 
     it('should get html file content with its imports embeded', done => {
       html.loadFile('./tests/resources/file1.html')
       .then(output => {
         assert.equal(output.content, '<html>\n  <head>\n    <style>\n  body {\n    color: red;\n  }\n</style>\n  </head>\n</html>');
-        done();
       })
-      .catch(done);
+      .then(done);
     });
 
     it('should get handle subfolders bravely', done => {
       html.loadFile('./tests/resources/file2.html')
       .then(output => {
         assert.equal(output.content, '<html>\n  <head>\n    <style>\n  body {\n    color: blue;\n  }\n</style>\n  </head>\n</html>');
-        done();
       })
-      .catch(done);
+      .then(done);
     });
   });
 
@@ -48,9 +44,8 @@ describe('builder.html', () => {
       html.minify('<html>\n  <head class="bla bla">\n    <style class="moo">\n  body {\n    color: blue;\n  }\n</style>\n  </head>\n</html>')
         .then(html => {
           assert.equal(html, '<html>\n<head class="bla bla">\n<style class=moo>body{color:#00f}</style>\n</head>\n</html>');
-          done();
         })
-        .catch(done);
+        .then(done);
     });
   });
 
@@ -59,9 +54,8 @@ describe('builder.html', () => {
     html.compile('./tests/resources/file1.html')
       .then(output => {
         assert.equal(output.content, '<html>\n<head>\n<style>body{color:red}</style>\n</head>\n</html>');
-        done();
       })
-      .catch(done);
+      .then(done);
     });
   });
 });

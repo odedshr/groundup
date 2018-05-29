@@ -1,95 +1,111 @@
 import fs  from 'fs';
-import colors from '../etc/console-colors.js';
+import Errors from '../etc/errors.js';
 
-const log = console.log,
+class Mapper {
+  constructor() {
+    this.handleError = error => { console.log(error); };
+  }
 
-  getFilePath = fileName => {
+  getFilePath(fileName) {
     let startOfName = fileName.lastIndexOf('/');
     if (startOfName === -1) {
       return '';
     } else {
       return fileName.substr(0,startOfName + 1);
     }
-  },
-
-  mapNested = (fileName, importPattern, external = []) => {
+  }
+  
+  map(fileName, importPattern, external = []) {
     let files = Array.isArray(fileName) ? fileName : [ fileName ];
-
-    return files.map(file => mapSingleNested(file, importPattern, external))
+  
+    return files.map(file => this.mapSingleNested(file, importPattern, external))
     .reduce((acc, item) => acc.concat(item), []);
-  },
-
-  mapSingleNested = (fileName, importPattern, external) => {
+  }
+  
+  mapSingleNested(fileName, importPattern, external) {
     const importRegex = new RegExp(importPattern,'mg');
-
+  
     if (!fs.existsSync(fileName)) {
       if (external.indexOf(fileName) === -1) {
-        consoleErrorMissingFile(fileName);
+        this.handleError(new Errors.NotFound('file', fileName));
       }
       return [];
     }
-
+  
     let files = [ fileName ],
       content = fs.readFileSync(fileName, 'utf-8'),
-      filePath = getFilePath(fileName),
+      filePath = this.getFilePath(fileName),
       match;
-
+  
     while ((match = importRegex.exec(content)) !== null) {
       if (files.indexOf(filePath + match[2]) === -1 && external.indexOf(match[2]) === -1) {
-        files = files.concat(mapSingleNested(filePath + match[2].replace(/^\.\//,''), importPattern, external));
+        files = files.concat(this.mapSingleNested(filePath + match[2].replace(/^\.\//,''), importPattern, external));
       }
     }
-
+  
     return files;
-  },
-
-  loadNested = (fileName, importPattern) => {
+  }
+  
+  load(fileName, importPattern) {
     let files = Array.isArray(fileName) ? fileName : [ fileName ];
-
-    return files.map(file => loadSingleNested(file, importPattern))
+  
+    return files.map(file => this.loadSingleNested(file, importPattern))
       .reduce((acc, item) => {
         acc.files = acc.files.concat(item.files);
         acc.content += item.content;
         return acc;
       }, { files: [], content: ''});
-  },
-
-  loadSingleNested = (fileName, importPattern) => {
+  }
+  
+  loadSingleNested (fileName, importPattern) {
     const importRegex = new RegExp(importPattern,'mg');
-
+  
     if (!fs.existsSync(fileName)) {
-      consoleErrorMissingFile(fileName);
+      this.handleError(new Errors.NotFound('file', fileName));
       return { files: [], content: '' };
     }
-
+  
     let files = [ fileName ],
       content = fs.readFileSync(fileName, 'utf-8'),
-      filePath = getFilePath(fileName),
+      filePath = this.getFilePath(fileName),
       match;
-
+  
     while ((match = importRegex.exec(content)) !== null) {
       if (files.indexOf(filePath + match[2]) === -1 ) {
         try {
-          let child = loadSingleNested(filePath + match[2], importPattern);
-
+          let child = this.loadSingleNested(filePath + match[2], importPattern);
+  
           content = content.replace(match[0], child.content);
           files = files.concat(child.files);
         }
-        catch (err) {
-          log(err);
+        catch(err) {
+          this.handleError(err);
         }
       }
       // be sure to reset the regex index not to mess it up with empty files
       importRegex.lastIndex = 0;
     }
-
+  
     return { files, content };
-  },
+    }
+  
+  /** Sets a handler to call upon on error event
+   * @param {Function} handler delegate
+   */
+  onError(handler) {
+    this.handleError = handler;
+  }
 
-  consoleErrorMissingFile = (fileName) => {
-    console.error(`${ colors.FgRed }ERROR LOADING MISSING FILE ${ colors.FgWhite }${ fileName }\n${ colors.Reset }`);
-  };
+  /**
+   * Returns only the public methods
+   */
+  getFacade() {
+    return { 
+      map: this.map.bind(this),
+      load: this.load.bind(this),
+      onError: this.onError.bind(this)
+    };
+  }
+}
 
-mapNested.load = loadNested;
-
-export default mapNested;
+export default (new Mapper()).getFacade();

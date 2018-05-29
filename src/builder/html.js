@@ -1,9 +1,12 @@
 import { minify }  from 'html-minifier';
-import mapNested from './map-nested.js';
+import mapper from './mapper.js';
 
 const importPattern = '<link rel="import" href=(["\'])(.*\.html)\\1 data-replace="true"\\s*\\/>';
-  
-export default {
+
+class HTML {
+  constructor() {
+    this.handleError = error => { console.log(error); };
+  }
 
   /**
    * Returns a promise for a merged and minified version of a html file
@@ -23,7 +26,7 @@ export default {
           return fileSet;
         });
     });
-  },
+  }
 
   /**
    * Returns a promise for a minified html code
@@ -50,21 +53,31 @@ export default {
       sortClassName: true,
       useShortDoctype: true
     })));
-  },
+  }
 
   /**
    * Returns a promise for a list of all files linked by `import` to the input file
    * @param {String} fileName 
    */
   mapFile(fileName) {
-    return new Promise(resolve => resolve(mapNested(fileName, importPattern)));
-  },
+    return new Promise(resolve => resolve(mapper.map(fileName, importPattern)));
+  }
 
   /**
    * Returns a promise for a code of all files linked by `import` to the input file
    * @param {String} fileName 
    */
   loadFile(fileName) {
-    return new Promise(resolve => resolve(mapNested.load(fileName, importPattern)));
+    return new Promise(resolve => resolve(mapper.load(fileName, importPattern)));
   }
-};
+
+    /** Sets a handler to call upon on error event
+   * @param {Function} handler delegate
+   */
+  onError(handler) {
+    this.handleError = handler;
+    mapper.onError(handler);
+  }
+}
+
+export default (new HTML());

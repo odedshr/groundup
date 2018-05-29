@@ -1,13 +1,16 @@
 import rollup from 'rollup';
 import babel from 'babel-core';
 import UglifyJS from 'uglify-js';
-import mapNested from './map-nested.js';
-import colors from '../etc/console-colors.js';
+import mapper from './mapper.js';
 
 const importPattern = `import.*(["\\'])(.*\\.js)\\1`,
   defaultFormat = 'cjs';
   
-export default {
+class JS {
+  constructor() {
+    this.handleError = error => { console.log(error); };
+  }
+
    /**
    * Returns a promise for a merged, transpiled and uglified version of an es6 file
    * @param {Object} options can be a single string file name, or array of string filenames,
@@ -21,6 +24,7 @@ export default {
       external = [],
       globals = {},
       format = defaultFormat;
+
     if (options instanceof Object) {
       if (Array.isArray(options)) {
         // options is just an array of sources
@@ -54,10 +58,10 @@ export default {
             return fileSet;
           });
       });
-  },
+  }
 
   /**
-  * Returns a promise for a minified js code
+  * Returns a promise for a minified js code, if bad code is provided it would reject with a syntax error
   * @param {String} jsCode code 
   */
   minify(jsCode) {
@@ -66,24 +70,24 @@ export default {
       
       output.error ? reject(output.error) : resolve(output.code);
     });
-  },
+  }
 
   /**
-  * Returns a promise for a transpiled code
+  * Returns a promise for a transpiled code, if bad code is provided it would reject with a syntax error
   * @param {String} esCode es6 code
   * @param {Boolean} minified (default is node)
   */
   transpile(esCode, minified = false) {
     return new Promise(resolve => resolve(babel.transform(esCode, { presets: ['env'], minified }).code));
-  },
+  }
 
   /**
   * Returns a promise for a list of all files linked by `import` to the input file
   * @param {String} fileName 
   */
   mapFile(fileName, options = []) {
-    return new Promise(resolve => resolve(mapNested(fileName, importPattern, options)));
-  },
+    return new Promise(resolve => resolve(mapper.map(fileName, importPattern, options)));
+  }
   
   /**
    * Returns a promise for a code of all files linked by `import` to the input files
@@ -98,7 +102,7 @@ export default {
         memo.content += item.content;
         return memo;
       }, { files: [], content: ''}));
-  },
+  }
 
   /**
   * Returns a promise for a code of all files linked by `import` to the input file
@@ -113,10 +117,18 @@ export default {
         content: result.code
       }))
       .catch(err => {
-        console.error(`${ colors.FgRed }ERROR LOADING ${ colors.FgWhite }${ input }\n${ colors.FgBlack + colors.Bright }`, 
-          err, 
-          colors.Reset);
+        this.handleError(err);
         return { files: [], content: '' };
       });
   }
-};
+
+  /** Sets a handler to call upon on error event
+   * @param {Function} handler delegate
+   */
+  onError(handler) {
+    this.handleError = handler;
+    mapper.onError(handler);
+  }
+}
+
+export default (new JS());
