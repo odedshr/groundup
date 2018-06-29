@@ -67,7 +67,7 @@
   },
   "scripts": {
     "build": "node ./src/builder-facade/Builder.js ./src/app.map.json",
-    "postinstall": "node ./postinstall.js",
+    "prepublish": "node ./scripts/compile-groundup.js",
     "test": "./node_modules/mocha/bin/mocha src/**/*.test.js --exit"
   },
   "version": "1.4.0"

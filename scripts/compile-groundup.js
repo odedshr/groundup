@@ -1,3 +1,4 @@
+// this file should be run from root folder of ground-up
 const rollup = require('rollup'),
   external = ['fs',
     'postcss',

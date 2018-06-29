@@ -1,5 +1,18 @@
-import { copyFileSync, existsSync, mkdirSync, lstatSync, readdirSync, statSync, unlinkSync, rmdirSync } from 'fs';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  lstatSync,
+  readdirSync,
+  statSync,
+  unlinkSync, 
+  rmdirSync,
+  readFileSync,
+  writeFileSync } from 'fs';
 import glob from 'glob';
+
+// copyFileSync was added only at node v8.5, so we need to provide backward compatibility
+const copyFile = copyFileSync || ((file, fileTarget) => writeFileSync(fileTarget, readFileSync(file)));
 
 /**
  * Return the file's target path by merging by replacing the sourcePath with targetPath
@@ -36,9 +49,9 @@ export default {
       } else {
         promises.push(new Promise((resolve, reject) => {
           this.addFilePath(fileTarget);
-          let err = copyFileSync(file, fileTarget);
+          let err = copyFile(file, fileTarget);
           if (err) {
-            console.error(`GroundUp:copyFileSync failed: ${file} => ${fileTarget}`);
+            console.error(`GroundUp:copyFile failed: ${file} => ${fileTarget}`);
             reject(err);
           } else {
             resolve();

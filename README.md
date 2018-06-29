@@ -23,7 +23,7 @@ Install with npm:
 ### Building
 Run with node:
 ```
-  node ./node-modules/groundup/dist/builder-cli.js [applicationMap] [--live [--build-now]]
+node ./node-modules/groundup/dist/builder-cli.js [applicationMap] [--live [--build-now]]
 ```
 If no parameters given, builder will build target files once and quit.
 ```
