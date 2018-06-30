@@ -104,7 +104,7 @@ describe('builder', () => {
     /* This test turns on watchers, make a change in a file and checks whether the watcher has changed the time
     * At the moment, watcher response-time is arbitrary and so the test might fail to timeout error
     */
-    xit('should update build when js file udpates', done => {
+    it('should update build when js file udpates', done => {
       let appMap = JSON.parse(fs.readFileSync('./tests/resources/app.map.json', 'utf-8')),
         fileName = './tests/resources/live-build-asset-child.js',
         jsCode = fs.readFileSync(fileName, 'utf-8'),

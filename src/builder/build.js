@@ -1,11 +1,12 @@
-import { existsSync, readFileSync, unlinkSync,  watch, writeFileSync } from 'fs';
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
+import { watch } from 'chokidar';
 import errors from '../etc/errors.js';
 import colors from '../etc/console-colors.js';
 import css from './css.js';
 import html from './html.js';
 import js from './js.js';
 import files from './files.js';
-  
+
 const defaultHandleError = (error) => console.error(error),
   WATCH_TIMEOUT = 2000,
 

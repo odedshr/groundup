@@ -1,17 +1,21 @@
 // this file should be run from root folder of ground-up
 const rollup = require('rollup'),
-  external = ['fs',
-    'postcss',
+  external = [
     'autoprefixer',
-    'clean-css',
-    'node-sass',
-    'html-minifier',
-    'rollup',
     'babel-core',
+    'chokidar',
+    'clean-css',
+    'fs',    
+    'glob',    
+    'html-minifier',
+    'node-sass',
+    'postcss',
+    'rollup',
     'uglify-js',
-    'glob',
+
     'rollup-plugin-commonjs',
-    'rollup-plugin-node-resolve'],
+    'rollup-plugin-node-resolve'
+  ],
   config = [
     { input: './src/builder/builder-cli.js',
       external,
