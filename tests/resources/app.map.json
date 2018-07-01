@@ -8,7 +8,7 @@
       "format": "es",
       "external": "vue.js"
     },
-    "main.css": ["file1.scss", "file2.scss"],
+    "main.css": ["file1.less", "file2.less"],
     "webWorker.js": ["live-build-asset.js"],
     "static/": ["subfolder/"]
   }

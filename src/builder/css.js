@@ -1,11 +1,10 @@
 import mapper from './mapper.js';
-import postcss from 'postcss';
-import autoprefixer from 'autoprefixer';
+import { render } from 'less';
+import LessPluginAutoPrefix from 'less-plugin-autoprefix';
 import CleanCSS from 'clean-css';
-import nodeSass from 'node-sass';
+
   
-const prefix = postcss([ autoprefixer ]),
-  sass = data => nodeSass.renderSync({ data }).css.toString(),
+const plugins = [new LessPluginAutoPrefix({browsers: ["last 2 versions"]})],
   importPattern = '^@import.*(["\'])(.*)\\1.*$';
 
 class CSS {
@@ -24,12 +23,11 @@ class CSS {
         return fileSet;
       }
 
-      return this.sass(fileSet.content)
+      return this.render(fileSet.content)
       .catch(err => {
         this.handleError(err);
         return '';
       })
-      .then(this.prefix, Array.isArray(fileName) ? fileName[0]: fileName)
       .then(this.minify)
       .then(compiledAndMinified => {
         fileSet.content = compiledAndMinified;
@@ -51,19 +49,11 @@ class CSS {
   }
 
   /**
-   * Returns a promise for a auto-prefixed css code
-   * @param {String} css code
-   */
-  prefix(css) {
-    return prefix.process(css, { from: '' }).then(prefixed => prefixed.css);
-  }
-
-  /**
    * Returns a promise for a transpiled css code
-   * @param {String} scss 
+   * @param {String} lessString 
    */
-  sass(scss) {
-    return new Promise(resolve => resolve(sass(scss)));
+  render(lessString) {
+    return render(lessString, { plugins }).then(result => result.css);
   }
 
   /**

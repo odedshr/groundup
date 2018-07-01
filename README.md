@@ -50,7 +50,7 @@ The application map is the set of instructions for the builder:
       "format": "es",
       "external": "vue.js"
     },
-    "main.css": ["file1.scss", "file2.scss"],
+    "main.css": ["file1.less", "file2.less"],
     "webWorker.js": ["web-worker.js", "tools.js"],
     "static/": ["subfolder/"]
   }
@@ -69,16 +69,15 @@ import { builder } from 'groundup'
 
 ### builder.css
 - minify(css) => minifiedCssString
-- prefix(css, fileName) => cssWithVendorPrefixesString
-`Prefix` adds `-moz` and `-webkit` prefix where necessary in
+- render(lessString) => cssString
+Vendor specific prefixes (`-ms`, `-moz` and `-webkit`) will be automatically added in
 accordance to [https://caniuse.com/](https://caniuse.com/).
-This uses [(]http://postcss.org/](http://postcss.org/) which I personally don't like but it's required by [https://github.com/postcss/autoprefixer](https://github.com/postcss/autoprefixer)
+This uses [postcss](http://postcss.org/) which I personally don't like but it's required by [autoprefixer](https://github.com/postcss/autoprefixer)
 which is the best (if not the only?) plugin to do the job while keep itself up-to-date.
-- sass(scss) => cssString
 - mapFile(fileName) => [ linkedFilesArray ]
 Files are linked using the `@import` command
 - loadFile(fileName) => fileContentWithImportsReplacdToActualFile
-- compile(fileName) => { content: minify(prefix(sass(loadFile(fileName))), files: [ linkedFilesArray ] }
+- compile(fileName) => { content: minify(render(loadFile(fileName)), files: [ linkedFilesArray ] }
 
 ### builder.html
 

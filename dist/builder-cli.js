@@ -4,10 +4,9 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var fs = require('fs');
 var fs__default = _interopDefault(fs);
-var postcss = _interopDefault(require('postcss'));
-var autoprefixer = _interopDefault(require('autoprefixer'));
+var less = require('less');
+var LessPluginAutoPrefix = _interopDefault(require('less-plugin-autoprefix'));
 var CleanCSS = _interopDefault(require('clean-css'));
-var nodeSass = _interopDefault(require('node-sass'));
 var htmlMinifier = require('html-minifier');
 var rollup = _interopDefault(require('rollup'));
 var babel = _interopDefault(require('babel-core'));
@@ -268,8 +267,7 @@ class Mapper {
 
 var mapper = (new Mapper()).getFacade();
 
-const prefix = postcss([ autoprefixer ]),
-  sass = data => nodeSass.renderSync({ data }).css.toString(),
+const plugins = [new LessPluginAutoPrefix({browsers: ["last 2 versions"]})],
   importPattern = '^@import.*(["\'])(.*)\\1.*$';
 
 class CSS {
@@ -288,12 +286,11 @@ class CSS {
         return fileSet;
       }
 
-      return this.sass(fileSet.content)
+      return this.render(fileSet.content)
       .catch(err => {
         this.handleError(err);
         return '';
       })
-      .then(this.prefix, Array.isArray(fileName) ? fileName[0]: fileName)
       .then(this.minify)
       .then(compiledAndMinified => {
         fileSet.content = compiledAndMinified;
@@ -315,19 +312,11 @@ class CSS {
   }
 
   /**
-   * Returns a promise for a auto-prefixed css code
-   * @param {String} css code
-   */
-  prefix(css) {
-    return prefix.process(css, { from: '' }).then(prefixed => prefixed.css);
-  }
-
-  /**
    * Returns a promise for a transpiled css code
-   * @param {String} scss 
+   * @param {String} lessString 
    */
-  sass(scss) {
-    return new Promise(resolve => resolve(sass(scss)));
+  render(lessString) {
+    return less.render(lessString, { plugins }).then(result => result.css);
   }
 
   /**
