@@ -70,5 +70,5 @@
     "prepublish": "node ./scripts/compile-groundup.js",
     "test": "./node_modules/mocha/bin/mocha src/**/*.test.js --exit"
   },
-  "version": "1.5.0"
+  "version": "1.6.0"
 }
