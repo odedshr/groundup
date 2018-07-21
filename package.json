@@ -70,5 +70,8 @@
     "prepublish": "node ./scripts/compile-groundup.js",
     "test": "./node_modules/mocha/bin/mocha src/**/*.test.js --exit"
   },
+  "prettier": {
+    "singleQuote": true
+  },
   "version": "1.6.1"
 }

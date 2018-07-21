@@ -10,7 +10,7 @@ describe('builder.files', () => {
         files.removePath('tests/dist/');
       }
     });
-    
+
     it('should copy file to target folder', () => {
       files.copy('tests/resources/file1.js', 'tests/dist/');
       assert.equal(fs.existsSync('tests/dist/file1.js'), true);
@@ -33,7 +33,10 @@ describe('builder.files', () => {
 
     it('should copy file withing folder to target folder', () => {
       files.copy('tests/resources/subfolder', 'tests/dist/');
-      assert.equal(fs.existsSync('tests/dist/subfolder/subfolder2/file3.html'), true);
+      assert.equal(
+        fs.existsSync('tests/dist/subfolder/subfolder2/file3.html'),
+        true
+      );
     });
   });
 });

@@ -49,7 +49,7 @@ class NotFound extends DetailedError {
   }
 
   toString() {
-    return `${ this.details.key } not Found: ${ this.details.value }`;
+    return `${this.details.key} not Found: ${this.details.value}`;
   }
 }
 
@@ -77,7 +77,9 @@ class TooLong extends DetailedError {
   }
 
   toString() {
-    return `${ this.details.key } is longer than ${ this.details.max } (${ this.details.value })`;
+    return `${this.details.key} is longer than ${this.details.max} (${
+      this.details.value
+    })`;
   }
 }
 
@@ -87,7 +89,9 @@ class TooShort extends DetailedError {
   }
 
   toString() {
-    return `${ this.details.key } is shorter than ${ this.details.min } (${ this.details.value })`;
+    return `${this.details.key} is shorter than ${this.details.min} (${
+      this.details.value
+    })`;
   }
 }
 
@@ -97,19 +101,18 @@ class Unauthorized extends DetailedError {
   }
 }
 
-
 export default {
-  AlreadyExists, 
-  BadInput, 
-  Custom, 
-  Expired, 
+  AlreadyExists,
+  BadInput,
+  Custom,
+  Expired,
   Immutable,
   MissingInput,
   NotFound,
   NoPermissions,
-  SaveFailed, 
-  System, 
+  SaveFailed,
+  System,
   TooLong,
-  TooShort,  
-  Unauthorized 
+  TooShort,
+  Unauthorized
 };

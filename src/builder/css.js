@@ -3,13 +3,14 @@ import { render } from 'less';
 import LessPluginAutoPrefix from 'less-plugin-autoprefix';
 import CleanCSS from 'clean-css';
 
-  
-const plugins = [new LessPluginAutoPrefix({browsers: ["last 2 versions"]})],
+const plugins = [new LessPluginAutoPrefix({ browsers: ['last 2 versions'] })],
   importPattern = '^@import.*(["\'])(.*)\\1.*$';
 
 class CSS {
   constructor() {
-    this.handleError = error => { console.log(error); };
+    this.handleError = error => {
+      console.log(error);
+    };
   }
 
   /**
@@ -18,39 +19,41 @@ class CSS {
    */
   compile(fileName) {
     return this.loadFile(fileName)
-    .then(fileSet => {
-      if(fileSet.content.length === 0) {
-        return fileSet;
-      }
+      .then(fileSet => {
+        if (fileSet.content.length === 0) {
+          return fileSet;
+        }
 
-      return this.render(fileSet.content)
+        return this.render(fileSet.content)
+          .catch(err => {
+            this.handleError(err);
+            return '';
+          })
+          .then(this.minify)
+          .then(compiledAndMinified => {
+            fileSet.content = compiledAndMinified;
+            return fileSet;
+          });
+      })
       .catch(err => {
         this.handleError(err);
-        return '';
-      })
-      .then(this.minify)
-      .then(compiledAndMinified => {
-        fileSet.content = compiledAndMinified;
-        return fileSet;
+        return { files: [], content: '' };
       });
-    })
-    .catch(err => {
-      this.handleError(err);
-      return { files: [], content: '' };
-    });
   }
 
   /**
    * Returns a promise for a minified css code
-   * @param {String} css code 
+   * @param {String} css code
    */
   minify(css) {
-    return new Promise(resolve => resolve(new CleanCSS({level: 2}).minify(css).styles));
+    return new Promise(resolve =>
+      resolve(new CleanCSS({ level: 2 }).minify(css).styles)
+    );
   }
 
   /**
    * Returns a promise for a transpiled css code
-   * @param {String} lessString 
+   * @param {String} lessString
    */
   render(lessString) {
     return render(lessString, { plugins }).then(result => result.css);
@@ -58,7 +61,7 @@ class CSS {
 
   /**
    * Returns a promise for a list of all files linked by `import` to the input file
-   * @param {String} fileName 
+   * @param {String} fileName
    */
   mapFile(fileName) {
     return new Promise(resolve => resolve(mapper.map(fileName, importPattern)));
@@ -66,10 +69,12 @@ class CSS {
 
   /**
    * Returns a promise for a code of all files linked by `import` to the input file
-   * @param {String} fileName 
+   * @param {String} fileName
    */
   loadFile(fileName) {
-    return new Promise(resolve => resolve(mapper.load(fileName, importPattern)));
+    return new Promise(resolve =>
+      resolve(mapper.load(fileName, importPattern))
+    );
   }
 
   /** Sets a handler to call upon on error event
@@ -81,4 +86,4 @@ class CSS {
   }
 }
 
-export default (new CSS());
+export default new CSS();

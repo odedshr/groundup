@@ -5,8 +5,8 @@ const rollup = require('rollup'),
     'babel-core',
     'chokidar',
     'clean-css',
-    'fs',    
-    'glob',    
+    'fs',
+    'glob',
     'html-minifier',
     'less',
     'less-plugin-autoprefix',
@@ -18,28 +18,32 @@ const rollup = require('rollup'),
     'rollup-plugin-node-resolve'
   ],
   config = [
-    { input: './src/builder/builder-cli.js',
+    {
+      input: './src/builder/builder-cli.js',
       external,
       output: {
         file: './dist/builder-cli.js',
         format: 'cjs'
       }
     },
-    { input: './src/builder/builder.js',
+    {
+      input: './src/builder/builder.js',
       external,
       output: {
         file: './dist/builder.js',
         format: 'cjs'
       }
     },
-    { input: './src/index.js',
+    {
+      input: './src/index.js',
       external,
       output: {
         file: './dist/groundup.js',
         format: 'cjs'
       }
     },
-    { input: './src/index.js',
+    {
+      input: './src/index.js',
       external,
       output: {
         file: './dist/groundup.web.js',
@@ -50,6 +54,6 @@ const rollup = require('rollup'),
 
 config.forEach(({ input, external, output }) => {
   rollup.rollup({ input, external }).then(build => {
-    build.write(output) ;
+    build.write(output);
   });
 });
