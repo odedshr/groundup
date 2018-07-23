@@ -65,7 +65,7 @@ class NotFound extends DetailedError {
   }
 
   toString() {
-    return `${ this.details.key } not Found: ${ this.details.value }`;
+    return `${this.details.key} not Found: ${this.details.value}`;
   }
 }
 
@@ -93,7 +93,9 @@ class TooLong extends DetailedError {
   }
 
   toString() {
-    return `${ this.details.key } is longer than ${ this.details.max } (${ this.details.value })`;
+    return `${this.details.key} is longer than ${this.details.max} (${
+      this.details.value
+    })`;
   }
 }
 
@@ -103,7 +105,9 @@ class TooShort extends DetailedError {
   }
 
   toString() {
-    return `${ this.details.key } is shorter than ${ this.details.min } (${ this.details.value })`;
+    return `${this.details.key} is shorter than ${this.details.min} (${
+      this.details.value
+    })`;
   }
 }
 
@@ -113,26 +117,27 @@ class Unauthorized extends DetailedError {
   }
 }
 
-
 var Errors = {
-  AlreadyExists, 
-  BadInput, 
-  Custom, 
-  Expired, 
+  AlreadyExists,
+  BadInput,
+  Custom,
+  Expired,
   Immutable,
   MissingInput,
   NotFound,
   NoPermissions,
-  SaveFailed, 
-  System, 
+  SaveFailed,
+  System,
   TooLong,
-  TooShort,  
-  Unauthorized 
+  TooShort,
+  Unauthorized
 };
 
 class Mapper {
   constructor() {
-    this.handleError = error => { console.log(error); };
+    this.handleError = error => {
+      console.log(error);
+    };
   }
 
   getFilePath(fileName) {
@@ -140,84 +145,95 @@ class Mapper {
     if (startOfName === -1) {
       return '';
     } else {
-      return fileName.substr(0,startOfName + 1);
+      return fileName.substr(0, startOfName + 1);
     }
   }
-  
+
   map(fileName, importPattern, external = []) {
-    let files = Array.isArray(fileName) ? fileName : [ fileName ];
-  
-    return files.map(file => this.mapSingleNested(file, importPattern, external))
-    .reduce((acc, item) => acc.concat(item), []);
+    let files = Array.isArray(fileName) ? fileName : [fileName];
+
+    return files
+      .map(file => this.mapSingleNested(file, importPattern, external))
+      .reduce((acc, item) => acc.concat(item), []);
   }
-  
+
   mapSingleNested(fileName, importPattern, external) {
-    const importRegex = new RegExp(importPattern,'mg');
-  
+    const importRegex = new RegExp(importPattern, 'mg');
+
     if (!fs__default.existsSync(fileName)) {
       if (external.indexOf(fileName) === -1) {
         this.handleError(new Errors.NotFound('file', fileName));
       }
       return [];
     }
-  
-    let files = [ fileName ],
+
+    let files = [fileName],
       content = fs__default.readFileSync(fileName, 'utf-8'),
       filePath = this.getFilePath(fileName),
       match;
-  
+
     while ((match = importRegex.exec(content)) !== null) {
-      if (files.indexOf(filePath + match[2]) === -1 && external.indexOf(match[2]) === -1) {
-        files = files.concat(this.mapSingleNested(filePath + match[2].replace(/^\.\//,''), importPattern, external));
+      if (
+        files.indexOf(filePath + match[2]) === -1 &&
+        external.indexOf(match[2]) === -1
+      ) {
+        files = files.concat(
+          this.mapSingleNested(
+            filePath + match[2].replace(/^\.\//, ''),
+            importPattern,
+            external
+          )
+        );
       }
     }
-  
+
     return files;
   }
-  
+
   load(fileName, importPattern) {
-    let files = Array.isArray(fileName) ? fileName : [ fileName ];
-  
-    return files.map(file => this.loadSingleNested(file, importPattern))
-      .reduce((acc, item) => {
+    let files = Array.isArray(fileName) ? fileName : [fileName];
+
+    return files.map(file => this.loadSingleNested(file, importPattern)).reduce(
+      (acc, item) => {
         acc.files = acc.files.concat(item.files);
         acc.content += item.content;
         return acc;
-      }, { files: [], content: ''});
+      },
+      { files: [], content: '' }
+    );
   }
-  
-  loadSingleNested (fileName, importPattern) {
-    const importRegex = new RegExp(importPattern,'mg');
-  
+
+  loadSingleNested(fileName, importPattern) {
+    const importRegex = new RegExp(importPattern, 'mg');
+
     if (!fs__default.existsSync(fileName)) {
       this.handleError(new Errors.NotFound('file', fileName));
       return { files: [], content: '' };
     }
-  
-    let files = [ fileName ],
+
+    let files = [fileName],
       content = fs__default.readFileSync(fileName, 'utf-8'),
       filePath = this.getFilePath(fileName),
       match;
-  
+
     while ((match = importRegex.exec(content)) !== null) {
-      if (files.indexOf(filePath + match[2]) === -1 ) {
+      if (files.indexOf(filePath + match[2]) === -1) {
         try {
           let child = this.loadSingleNested(filePath + match[2], importPattern);
-  
+
           content = content.replace(match[0], child.content);
           files = files.concat(child.files);
-        }
-        catch(err) {
+        } catch (err) {
           this.handleError(err);
         }
       }
       // be sure to reset the regex index not to mess it up with empty files
       importRegex.lastIndex = 0;
     }
-  
+
     return { files, content };
-    }
-  
+  }
+
   /** Sets a handler to call upon on error event
    * @param {Function} handler delegate
    */
@@ -229,7 +245,7 @@ class Mapper {
    * Returns only the public methods
    */
   getFacade() {
-    return { 
+    return {
       map: this.map.bind(this),
       load: this.load.bind(this),
       onError: this.onError.bind(this)
@@ -237,14 +253,16 @@ class Mapper {
   }
 }
 
-var mapper = (new Mapper()).getFacade();
+var mapper = new Mapper().getFacade();
 
-const plugins = [new LessPluginAutoPrefix({browsers: ["last 2 versions"]})],
+const plugins = [new LessPluginAutoPrefix({ browsers: ['last 2 versions'] })],
   importPattern = '^@import.*(["\'])(.*)\\1.*$';
 
 class CSS {
   constructor() {
-    this.handleError = error => { console.log(error); };
+    this.handleError = error => {
+      console.log(error);
+    };
   }
 
   /**
@@ -253,39 +271,41 @@ class CSS {
    */
   compile(fileName) {
     return this.loadFile(fileName)
-    .then(fileSet => {
-      if(fileSet.content.length === 0) {
-        return fileSet;
-      }
+      .then(fileSet => {
+        if (fileSet.content.length === 0) {
+          return fileSet;
+        }
 
-      return this.render(fileSet.content)
+        return this.render(fileSet.content)
+          .catch(err => {
+            this.handleError(err);
+            return '';
+          })
+          .then(this.minify)
+          .then(compiledAndMinified => {
+            fileSet.content = compiledAndMinified;
+            return fileSet;
+          });
+      })
       .catch(err => {
         this.handleError(err);
-        return '';
-      })
-      .then(this.minify)
-      .then(compiledAndMinified => {
-        fileSet.content = compiledAndMinified;
-        return fileSet;
+        return { files: [], content: '' };
       });
-    })
-    .catch(err => {
-      this.handleError(err);
-      return { files: [], content: '' };
-    });
   }
 
   /**
    * Returns a promise for a minified css code
-   * @param {String} css code 
+   * @param {String} css code
    */
   minify(css) {
-    return new Promise(resolve => resolve(new CleanCSS({level: 2}).minify(css).styles));
+    return new Promise(resolve =>
+      resolve(new CleanCSS({ level: 2 }).minify(css).styles)
+    );
   }
 
   /**
    * Returns a promise for a transpiled css code
-   * @param {String} lessString 
+   * @param {String} lessString
    */
   render(lessString) {
     return less.render(lessString, { plugins }).then(result => result.css);
@@ -293,7 +313,7 @@ class CSS {
 
   /**
    * Returns a promise for a list of all files linked by `import` to the input file
-   * @param {String} fileName 
+   * @param {String} fileName
    */
   mapFile(fileName) {
     return new Promise(resolve => resolve(mapper.map(fileName, importPattern)));
@@ -301,10 +321,12 @@ class CSS {
 
   /**
    * Returns a promise for a code of all files linked by `import` to the input file
-   * @param {String} fileName 
+   * @param {String} fileName
    */
   loadFile(fileName) {
-    return new Promise(resolve => resolve(mapper.load(fileName, importPattern)));
+    return new Promise(resolve =>
+      resolve(mapper.load(fileName, importPattern))
+    );
   }
 
   /** Sets a handler to call upon on error event
@@ -316,13 +338,16 @@ class CSS {
   }
 }
 
-var css = (new CSS());
+var css = new CSS();
 
-const importPattern$1 = '<link rel="import" href=(["\'])(.*\.html)\\1 data-replace="true"\\s*\\/>';
+const importPattern$1 =
+  '<link rel="import" href=(["\'])(.*.html)\\1 data-replace="true"\\s*\\/>';
 
 class HTML {
   constructor() {
-    this.handleError = error => { console.log(error); };
+    this.handleError = error => {
+      console.log(error);
+    };
   }
 
   /**
@@ -330,51 +355,53 @@ class HTML {
    * @param {String} fileName of scss file
    */
   compile(fileName) {
-    return this.loadFile(fileName)
-    .then(fileSet => {
-      if(fileSet.content.length === 0) {
+    return this.loadFile(fileName).then(fileSet => {
+      if (fileSet.content.length === 0) {
         return fileSet;
       }
-      
-      return this.minify(fileSet.content)
-        .then(minified => {
-          fileSet.content = minified;
 
-          return fileSet;
-        });
+      return this.minify(fileSet.content).then(minified => {
+        fileSet.content = minified;
+
+        return fileSet;
+      });
     });
   }
 
   /**
    * Returns a promise for a minified html code
-   * @param {String} css code 
+   * @param {String} css code
    */
   minify(html) {
-    return new Promise(resolve => resolve(htmlMinifier.minify(html,{
-      collapseBooleanAttributes: true,
-      collapseInlineTagWhitespace: true,
-      collapseWhitespace: true,
-      conservativeCollapse: true,
-      decodeEntities: true,
-      removeAttributeQuotes: true,
-      keepClosingSlash: true,
-      minifyCSS: true,
-      minifyJS: true,
-      minifyURLs: true,
-      preserveLineBreaks: true,
-      removeComments: true,
-      removeRedundantAttributes: true,
-      removeScriptTypeAttributes: true,
-      removeStyleLinkTypeAttributes: true,
-      sortAttributes: true,
-      sortClassName: true,
-      useShortDoctype: true
-    })));
+    return new Promise(resolve =>
+      resolve(
+        htmlMinifier.minify(html, {
+          collapseBooleanAttributes: true,
+          collapseInlineTagWhitespace: true,
+          collapseWhitespace: true,
+          conservativeCollapse: true,
+          decodeEntities: true,
+          removeAttributeQuotes: true,
+          keepClosingSlash: true,
+          minifyCSS: true,
+          minifyJS: true,
+          minifyURLs: true,
+          preserveLineBreaks: true,
+          removeComments: true,
+          removeRedundantAttributes: true,
+          removeScriptTypeAttributes: true,
+          removeStyleLinkTypeAttributes: true,
+          sortAttributes: true,
+          sortClassName: true,
+          useShortDoctype: true
+        })
+      )
+    );
   }
 
   /**
    * Returns a promise for a list of all files linked by `import` to the input file
-   * @param {String} fileName 
+   * @param {String} fileName
    */
   mapFile(fileName) {
     return new Promise(resolve => resolve(mapper.map(fileName, importPattern$1)));
@@ -382,13 +409,15 @@ class HTML {
 
   /**
    * Returns a promise for a code of all files linked by `import` to the input file
-   * @param {String} fileName 
+   * @param {String} fileName
    */
   loadFile(fileName) {
-    return new Promise(resolve => resolve(mapper.load(fileName, importPattern$1)));
+    return new Promise(resolve =>
+      resolve(mapper.load(fileName, importPattern$1))
+    );
   }
 
-    /** Sets a handler to call upon on error event
+  /** Sets a handler to call upon on error event
    * @param {Function} handler delegate
    */
   onError(handler) {
@@ -397,17 +426,19 @@ class HTML {
   }
 }
 
-var html = (new HTML());
+var html = new HTML();
 
 const importPattern$2 = `import.*(["\\'])(.*\\.js)\\1`,
   defaultFormat = 'cjs';
-  
+
 class JS {
   constructor() {
-    this.handleError = error => { console.log(error); };
+    this.handleError = error => {
+      console.log(error);
+    };
   }
 
-   /**
+  /**
    * Returns a promise for a merged, transpiled and uglified version of an es6 file
    * @param {Object} options can be a single string file name, or array of string filenames,
    * or an Object with the following parameters
@@ -427,19 +458,21 @@ class JS {
         filenames = options;
       } else {
         // options is a complex object
-        filenames = Array.isArray(options.source) ? [...options.source] : [options.source];
+        filenames = Array.isArray(options.source)
+          ? [...options.source]
+          : [options.source];
         external = options.external || external;
         format = options.format || format;
         globals = options.globals || globals;
       }
     } else {
       //options is just a string
-      filenames = [ options ];
+      filenames = [options];
     }
 
-    return this.loadFiles(filenames, format, external, globals)
-      .then(fileSet => {
-        if(fileSet.content.length === 0) {
+    return this.loadFiles(filenames, format, external, globals).then(
+      fileSet => {
+        if (fileSet.content.length === 0) {
           return fileSet;
         }
 
@@ -453,62 +486,74 @@ class JS {
             console.error('build.js.transpile: ', err);
             return fileSet;
           });
-      });
+      }
+    );
   }
 
   /**
-  * Returns a promise for a minified js code, if bad code is provided it would reject with a syntax error
-  * @param {String} jsCode code 
-  */
+   * Returns a promise for a minified js code, if bad code is provided it would reject with a syntax error
+   * @param {String} jsCode code
+   */
   minify(jsCode) {
     return new Promise((resolve, reject) => {
       let output = UglifyJS.minify(jsCode);
-      
+
       output.error ? reject(output.error) : resolve(output.code);
     });
   }
 
   /**
-  * Returns a promise for a transpiled code, if bad code is provided it would reject with a syntax error
-  * @param {String} esCode es6 code
-  * @param {Boolean} minified (default is node)
-  */
+   * Returns a promise for a transpiled code, if bad code is provided it would reject with a syntax error
+   * @param {String} esCode es6 code
+   * @param {Boolean} minified (default is node)
+   */
   transpile(esCode, minified = false) {
-    return new Promise(resolve => resolve(babel.transform(esCode, { presets: ['env'], minified }).code));
+    return new Promise(resolve =>
+      resolve(babel.transform(esCode, { presets: ['env'], minified }).code)
+    );
   }
 
   /**
-  * Returns a promise for a list of all files linked by `import` to the input file
-  * @param {String} fileName 
-  */
+   * Returns a promise for a list of all files linked by `import` to the input file
+   * @param {String} fileName
+   */
   mapFile(fileName, options = []) {
-    return new Promise(resolve => resolve(mapper.map(fileName, importPattern$2, options)));
+    return new Promise(resolve =>
+      resolve(mapper.map(fileName, importPattern$2, options))
+    );
   }
-  
+
   /**
    * Returns a promise for a code of all files linked by `import` to the input files
    * @param {String[]} input list of files to load
    * @param {String} format of output files (default is 'cjs')
-   */  
+   */
+
   loadFiles(input, format = defaultFormat, external = [], globals = {}) {
-    return Promise
-      .all(input.map(file => this.loadFile(file, format, external, globals)))
-      .then(res => res.reduce((memo, item) => {
-        memo.files = memo.files.concat(item.files);
-        memo.content += item.content;
-        return memo;
-      }, { files: [], content: ''}));
+    return Promise.all(
+      input.map(file => this.loadFile(file, format, external, globals))
+    ).then(res =>
+      res.reduce(
+        (memo, item) => {
+          memo.files = memo.files.concat(item.files);
+          memo.content += item.content;
+          return memo;
+        },
+        { files: [], content: '' }
+      )
+    );
   }
 
   /**
-  * Returns a promise for a code of all files linked by `import` to the input file
-  * @param {String} input filename
-  * @param {String} format of output files (default is 'cjs')* 
-  */
+   * Returns a promise for a code of all files linked by `import` to the input file
+   * @param {String} input filename
+   * @param {String} format of output files (default is 'cjs')*
+   */
   loadFile(input, format = defaultFormat, external = [], globals = {}) {
-    return rollup.rollup({ input, external })
+    return rollup
+      .rollup({ input, external })
       .then(bundle => bundle.generate({ format, globals }))
-      .then (result => ({
+      .then(result => ({
         files: result.modules,
         content: result.code
       }))
@@ -527,25 +572,29 @@ class JS {
   }
 }
 
-var js = (new JS());
+var js = new JS();
 
 // copyFileSync was added only at node v8.5, so we need to provide backward compatibility
-const copyFile = fs.copyFileSync || ((file, fileTarget) => fs.writeFileSync(fileTarget, fs.readFileSync(file)));
+const copyFile =
+  fs.copyFileSync ||
+  ((file, fileTarget) => fs.writeFileSync(fileTarget, fs.readFileSync(file)));
 
 /**
  * Return the file's target path by merging by replacing the sourcePath with targetPath
  * If source path contains /** /*.*' it is ignored
- * @param {String} file 
+ * @param {String} file
  * @param {String} sourcePath
- * @param {String} targetPath 
+ * @param {String} targetPath
  */
-function getFileTargt (file, sourcePath, targetPath) {
+function getFileTargt(file, sourcePath, targetPath) {
   if (file === sourcePath) {
     return targetPath + file.substr(file.lastIndexOf('/'));
   }
 
   if (targetPath.match(/\/$/)) {
-    return targetPath + file.replace(sourcePath.replace('/**/*.*', '') + '/', '');
+    return (
+      targetPath + file.replace(sourcePath.replace('/**/*.*', '') + '/', '')
+    );
   }
 
   return targetPath;
@@ -555,7 +604,7 @@ var files = {
   /**
    * copy source files to target
    * @param {String[]} source (or a single string)
-   * @param {String} target 
+   * @param {String} target
    */
   copy(source, target) {
     const handleFile = (task, file) => {
@@ -563,22 +612,28 @@ var files = {
 
       if (fs.lstatSync(file).isDirectory()) {
         this.addPath(fileTarget);
-        sources.push({ source: `${file}/**/*.*`, target: fileTarget + '/'});
+        sources.push({ source: `${file}/**/*.*`, target: fileTarget + '/' });
       } else {
-        promises.push(new Promise((resolve, reject) => {
-          this.addFilePath(fileTarget);
-          let err = copyFile(file, fileTarget);
-          if (err) {
-            console.error(`GroundUp:copyFile failed: ${file} => ${fileTarget}`);
-            reject(err);
-          } else {
-            resolve();
-          }
-        }));
+        promises.push(
+          new Promise((resolve, reject) => {
+            this.addFilePath(fileTarget);
+            let err = copyFile(file, fileTarget);
+            if (err) {
+              console.error(
+                `GroundUp:copyFile failed: ${file} => ${fileTarget}`
+              );
+              reject(err);
+            } else {
+              resolve();
+            }
+          })
+        );
       }
     };
 
-    let sources = Array.isArray(source) ? source.map( source=> ({ source, target })) : [{ source, target }],
+    let sources = Array.isArray(source)
+        ? source.map(source => ({ source, target }))
+        : [{ source, target }],
       promises = [];
 
     this.addPath(target.substring(0, target.lastIndexOf('/')));
@@ -593,7 +648,7 @@ var files = {
 
   /**
    * Returns a promise for a list of all files matching the fileName pattern
-   * @param {String} fileName 
+   * @param {String} fileName
    */
   mapFile(fileName) {
     return new Promise(resolve => resolve(glob.sync(fileName, {})));
@@ -601,7 +656,7 @@ var files = {
 
   /**
    * Verifies path exists by creating each folder if not already exists
-   * @param {String} path 
+   * @param {String} path
    */
   addPath(path) {
     path.split('/').reduce((acc, folder) => {
@@ -614,91 +669,98 @@ var files = {
       return acc + '/';
     }, '');
   },
-  
+
   /**
    * Verifies a path of a file exists by creating each folder if not already exists
    * This means that the last element in the string will not be created as a folder (as it is a file)
-   * @param {String} filePath 
+   * @param {String} filePath
    */
   addFilePath(filePath) {
-    filePath.split('/').slice(0,-1).reduce((acc, folder) => {
-      acc += folder;
+    filePath
+      .split('/')
+      .slice(0, -1)
+      .reduce((acc, folder) => {
+        acc += folder;
 
-      // when path is absolute ('/Volumes...') the first acc ==='' so we shouldn't try to create it
-      if (acc.length && !fs.existsSync(acc)) {
-        fs.mkdirSync(acc);
-      }
-      return acc + '/';
-    }, '');
+        // when path is absolute ('/Volumes...') the first acc ==='' so we shouldn't try to create it
+        if (acc.length && !fs.existsSync(acc)) {
+          fs.mkdirSync(acc);
+        }
+        return acc + '/';
+      }, '');
   },
 
   /**
    * Removes a file or folder and its content recursively
-   * @param {String} path 
+   * @param {String} path
    */
   removePath(path) {
     let curPath;
 
     if (fs.existsSync(path)) {
-      fs.readdirSync(path)
-        .forEach(file => {
-          curPath = path + '/' + file;
+      fs.readdirSync(path).forEach(file => {
+        curPath = path + '/' + file;
 
-          if(fs.statSync(curPath).isDirectory()) { // recursive
-            this.removePath(curPath);
-          } else { // delete file
-            fs.unlinkSync(curPath);
-          }
-        });
+        if (fs.statSync(curPath).isDirectory()) {
+          // recursive
+          this.removePath(curPath);
+        } else {
+          // delete file
+          fs.unlinkSync(curPath);
+        }
+      });
       fs.rmdirSync(path);
     }
   }
 };
 
 var colors = {
-  Reset : '\x1b[0m',
-  Bright : '\x1b[1m',
-  Dim : '\x1b[2m',
-  Underscore : '\x1b[4m',
-  Blink : '\x1b[5m',
-  Reverse : '\x1b[7m',
-  Hidden : '\x1b[8m',
+  Reset: '\x1b[0m',
+  Bright: '\x1b[1m',
+  Dim: '\x1b[2m',
+  Underscore: '\x1b[4m',
+  Blink: '\x1b[5m',
+  Reverse: '\x1b[7m',
+  Hidden: '\x1b[8m',
 
-  FgBlack : '\x1b[30m',
-  FgRed : '\x1b[31m',
-  FgGreen : '\x1b[32m',
-  FgYellow : '\x1b[33m',
-  FgBlue : '\x1b[34m',
-  FgMagenta : '\x1b[35m',
-  FgCyan : '\x1b[36m',
-  FgWhite : '\x1b[37m',
+  FgBlack: '\x1b[30m',
+  FgRed: '\x1b[31m',
+  FgGreen: '\x1b[32m',
+  FgYellow: '\x1b[33m',
+  FgBlue: '\x1b[34m',
+  FgMagenta: '\x1b[35m',
+  FgCyan: '\x1b[36m',
+  FgWhite: '\x1b[37m',
 
-  BgBlack : '\x1b[40m',
-  BgRed : '\x1b[41m',
-  BgGreen : '\x1b[42m',
-  BgYellow : '\x1b[43m',
-  BgBlue : '\x1b[44m',
-  BgMagenta : '\x1b[45m',
-  BgCyan : '\x1b[46m',
-  BgWhite : '\x1b[47m'
+  BgBlack: '\x1b[40m',
+  BgRed: '\x1b[41m',
+  BgGreen: '\x1b[42m',
+  BgYellow: '\x1b[43m',
+  BgBlue: '\x1b[44m',
+  BgMagenta: '\x1b[45m',
+  BgCyan: '\x1b[46m',
+  BgWhite: '\x1b[47m'
 };
 
-const defaultHandleError = (error) => console.error(error),
+const defaultHandleError = error => console.error(error),
   WATCH_TIMEOUT = 2000,
-
-  types = new Map([['js', { regExp: /\.js$/, id: 'js', handler: js }],
+  types = new Map([
+    ['js', { regExp: /\.js$/, id: 'js', handler: js }],
     ['css', { regExp: /\.css$/, id: 'css', handler: css }],
-    ['html', { regExp: /\.html$/,id: 'html', handler: html }],
-    ['files', { regExp: /\/$/, id: 'files', handler: files }]]);
+    ['html', { regExp: /\.html$/, id: 'html', handler: html }],
+    ['files', { regExp: /\/$/, id: 'files', handler: files }]
+  ]);
 
 /**
  * Runs `method()` and conole.time the time it took, along with `label`
- * @param {String} label 
- * @param {Function} method 
+ * @param {String} label
+ * @param {Function} method
  */
 function logged(label, method) {
   const time = new Date();
-  label =  `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:${padTwoDigits(time.getSeconds())} ${label}`;
+  label = `${padTwoDigits(time.getHours())}:${padTwoDigits(
+    time.getMinutes()
+  )}:${padTwoDigits(time.getSeconds())} ${label}`;
   console.time(label);
   method();
   console.timeEnd(label);
@@ -710,7 +772,7 @@ function padTwoDigits(num) {
 
 /**
  * loads and parse application maps
- * @param {String} fileName 
+ * @param {String} fileName
  * @throws NotFoundError if file not found
  * TBD: check file content for required fields
  */
@@ -724,8 +786,8 @@ function readMapFile(fileName) {
 
 /**
  * Returns an absolute path for a file
- * @param {String} path 
- * @param {String} file 
+ * @param {String} path
+ * @param {String} file
  */
 function getAbsolutePath(path, file) {
   if (path.length > 0 && !path.match(/\/$/)) {
@@ -736,14 +798,15 @@ function getAbsolutePath(path, file) {
 
 /**
  * Returns a Map of fileName => absolute values
- * @param {String} path 
+ * @param {String} path
  * @param {Strings[]} entries array of file name
  */
 function getAbsolutePathes(path, entries) {
   let map = new Map();
 
-  Object.keys(entries)
-    .forEach(entry => map.set(entry, getMappedEntries(path, entries[entry])));
+  Object.keys(entries).forEach(entry =>
+    map.set(entry, getMappedEntries(path, entries[entry]))
+  );
 
   return map;
 }
@@ -752,7 +815,7 @@ function getAbsolutePathes(path, entries) {
  * Returns
  * @param {String} output fileName
  * @param {Strings[]} files to watch
- * @param {Function} mapFunc 
+ * @param {Function} mapFunc
  * @param {String} target folder
  */
 function getWatcherPromises(output, files$$1, mapFunc, target, handleError) {
@@ -763,114 +826,130 @@ function getWatcherPromises(output, files$$1, mapFunc, target, handleError) {
     external = options.external;
     files$$1 = files$$1.source;
   }
-  return files$$1.map(file => mapFunc(file, external)
-    .then(
-      results => getWatchers(file, results, output, target, options, handleError)
+  return files$$1.map(file =>
+    mapFunc(file, external).then(results =>
+      getWatchers(file, results, output, target, options, handleError)
     )
-    
   );
 }
 
 /**
  * Returns an array of objects { file(name), watcher }
  * @param {String[]} files files to watch
- * @param {String} output file name 
+ * @param {String} output file name
  * @param {String} target path
  */
 function getWatchers(rootFile, files$$1, output, target, options, handleError) {
-  return files$$1.map(
-    file => {
-      let timeOut; // fs.watch tends to run twice so we'll debounce it using a timeout
+  return files$$1.map(file => {
+    let timeOut; // fs.watch tends to run twice so we'll debounce it using a timeout
 
-      return {
-        file,
-        options,
-        watcher: chokidar.watch(file, 
-          (eventType, triggering) => {
-            if (!timeOut) {
-              timeOut = setTimeout(() => {
-                logged(`${colors.FgGreen}✓${colors.Reset} ${colors.Dim}Recompiled${colors.Reset} ` +
-                  `${colors.FgCyan}${output}${colors.Reset}`, 
-                  writeToFile.bind({},
-                    target,
-                    output,
-                    options || rootFile,
-                    getFileType(output),
-                    triggering
-                  )
-                  .catch(handleError)
-                );
-                timeOut = null;
-                }, WATCH_TIMEOUT);
-            }
-          })
-      };
-    }
-  );
+    return {
+      file,
+      options,
+      watcher: chokidar.watch(file, (eventType, triggering) => {
+        if (!timeOut) {
+          timeOut = setTimeout(() => {
+            logged(
+              `${colors.FgGreen}✓${colors.Reset} ${colors.Dim}Recompiled${
+                colors.Reset
+              } ` + `${colors.FgCyan}${output}${colors.Reset}`,
+              writeToFile
+                .bind(
+                  {},
+                  target,
+                  output,
+                  options || rootFile,
+                  getFileType(output),
+                  triggering
+                )
+                .catch(handleError)
+            );
+            timeOut = null;
+          }, WATCH_TIMEOUT);
+        }
+      })
+    };
+  });
 }
 
 /**
  * Returns a file's appropriate type from a fixed Map of files types
- * @param {String} fileName 
+ * @param {String} fileName
  */
 function getFileType(fileName) {
-  let type = Array.from(types.values()).find(type => type.regExp.test(fileName));
+  let type = Array.from(types.values()).find(type =>
+    type.regExp.test(fileName)
+  );
 
   return type || types.get('files');
 }
 
 /**
  * Compile and writes a file to the file-system. if file type is `static` and source is missing, it will remove target file
- * @param {String} targetPath 
- * @param {String} targetFileName 
- * @param {String} sourceFile 
+ * @param {String} targetPath
+ * @param {String} targetFileName
+ * @param {String} sourceFile
  * @param {Object} fileTypeDef containing `id` and a `handler` that has a `compile` function (unless `id`===`static)
  * @param {String} triggeredByFile a source file which was deleted (and should be removed from target folder)
  */
-function writeToFile(targetPath, targetFileName, sourceFile, fileTypeDef, triggeredByFile) {
+function writeToFile(
+  targetPath,
+  targetFileName,
+  sourceFile,
+  fileTypeDef,
+  triggeredByFile
+) {
   let absoluteTarget = getAbsolutePath(targetPath, targetFileName);
 
   if (fileTypeDef.id === 'files') {
     if (triggeredByFile !== undefined) {
-      removeFileIfRedundant(triggeredByFile, sourceFile, `${targetPath}/${targetFileName}`);
+      removeFileIfRedundant(
+        triggeredByFile,
+        sourceFile,
+        `${targetPath}/${targetFileName}`
+      );
     }
     return files.copy(sourceFile, getAbsolutePath(targetPath, targetFileName));
   } else {
-    return fileTypeDef.handler.compile(sourceFile)
-      .then(response => {
-        files.addPath(absoluteTarget.substring(0, absoluteTarget.lastIndexOf('/')));
-        fs.writeFileSync(absoluteTarget, response.content);
-        return response;
-      });
+    return fileTypeDef.handler.compile(sourceFile).then(response => {
+      files.addPath(
+        absoluteTarget.substring(0, absoluteTarget.lastIndexOf('/'))
+      );
+      fs.writeFileSync(absoluteTarget, response.content);
+      return response;
+    });
   }
 }
 
 /**
  * Removes a file if not found in source
- * @param {String} file 
- * @param {String[]} entries 
- * @param {String} destPath 
+ * @param {String} file
+ * @param {String[]} entries
+ * @param {String} destPath
  */
 function removeFileIfRedundant(file, entries, destPath) {
-  if (!entries.find(entry => {
-    if (entry === file) {
-      // if entry is the actual file
-      return fs.existsSync(entry);
-    } else if (entry.substring(entry.length - 1) === '/') {
-      // if entry is a folder containing the file
-      return fs.existsSync(`${entry}${file}`);
-    }
-    return false;
-  }) && fs.existsSync(`${destPath}${file}`)) {
+  if (
+    !entries.find(entry => {
+      if (entry === file) {
+        // if entry is the actual file
+        return fs.existsSync(entry);
+      } else if (entry.substring(entry.length - 1) === '/') {
+        // if entry is a folder containing the file
+        return fs.existsSync(`${entry}${file}`);
+      }
+      return false;
+    }) &&
+    fs.existsSync(`${destPath}${file}`)
+  ) {
     fs.unlinkSync(`${destPath}${file}`);
   }
 }
 
 /**
  * return an array of source from app.map.json "entries" object
- * @param {Object} entry 
+ * @param {Object} entry
  */
-function getMappedEntries (source, entry) {
+function getMappedEntries(source, entry) {
   let sources;
 
   if (entry instanceof Object) {
@@ -888,25 +967,28 @@ function getMappedEntries (source, entry) {
   return sources.map(file => getAbsolutePath(source, file));
 }
 
- /**
-   * Builds destination folder according to appMap description
-   * @param {Object} appMap OR filename
-   */
+/**
+ * Builds destination folder according to appMap description
+ * @param {Object} appMap OR filename
+ */
 function once(appMap, handleError = defaultHandleError) {
   if (typeof appMap === 'string') {
     appMap = readMapFile(appMap);
   }
 
   let source = appMap.source || '',
-      target = appMap.target || '';
+    target = appMap.target || '';
 
-  return Promise.all(Object.keys(appMap.entries)
-    .map(entry => writeToFile(
-      target,
-      entry,
-      getMappedEntries(source, appMap.entries[entry]),
-      getFileType(entry))
-    .catch(handleError)));
+  return Promise.all(
+    Object.keys(appMap.entries).map(entry =>
+      writeToFile(
+        target,
+        entry,
+        getMappedEntries(source, appMap.entries[entry]),
+        getFileType(entry)
+      ).catch(handleError)
+    )
+  );
 }
 
 /**
@@ -919,15 +1001,23 @@ function live(appMap, handleError = defaultHandleError) {
   }
 
   let target = appMap.target || '',
-      entries = getAbsolutePathes(appMap.source || '', appMap.entries);
-  
-  return Promise.all(Array.from(entries.keys())
-    .map(entry => getWatcherPromises(entry,
-      entries.get(entry),
-      getFileType(entry).handler.mapFile,
-      target, handleError) )
-    .reduce((acc, promise) => acc.concat(promise), [])
-  ).then(watcheArrays => watcheArrays.reduce((acc, watches) => acc.concat(watches), []));
+    entries = getAbsolutePathes(appMap.source || '', appMap.entries);
+
+  return Promise.all(
+    Array.from(entries.keys())
+      .map(entry =>
+        getWatcherPromises(
+          entry,
+          entries.get(entry),
+          getFileType(entry).handler.mapFile,
+          target,
+          handleError
+        )
+      )
+      .reduce((acc, promise) => acc.concat(promise), [])
+  ).then(watcheArrays =>
+    watcheArrays.reduce((acc, watches) => acc.concat(watches), [])
+  );
 }
 
 class Build {
@@ -943,7 +1033,7 @@ class Build {
     return live(appMap);
   }
 
-    /** Sets a handler to call upon on error event
+  /** Sets a handler to call upon on error event
    * @param {Function} handler delegate
    */
   onError(handler) {
@@ -962,7 +1052,7 @@ class Build {
   }
 }
 
-let build = (new Build()).getFacade();
+let build = new Build().getFacade();
 
 var builder = {
   css,

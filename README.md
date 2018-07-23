@@ -219,8 +219,10 @@ DOMinion is a DOM updater. it gets to node tree and update the first tree while 
 
 ### DOMinion.update
 ```
-DOMinion.update(current, plan)
+DOMinion.update(current, plan, controllers, forceBind)
 ```
+`current` and `plan` are two DOM trees, while controllers is a on object with init functions.
+When provided with controllers, it will run `DOMinion.bind(current, controllers, forceBind)` after the update
 
 ### DOMinion.map
 ```
@@ -236,3 +238,18 @@ Consider the following tree -
 ```
 A node's id is based on the tagName and its id attribute (```ul#list```), or name (```li|name:item```), or src (```img|src:xx```), or href (```a|href:yy```), 
 or its content (```div=item2```), or it's parent-id (```ul#list>li[1]``` or ```div=item2>Text[0]```).
+
+### DOMinion.bind
+```
+DOMinion.bind(current, controllers, forceBind)
+```
+Scan the `current` node tree to find elements with `data-js` attribute and provide them to the method provided in controller with the appropriate name.
+For example:
+```
+DOMinion.bind(
+  parser.parseFromString('<div data-js="init"'>hello</div>'), 
+  { init(node) { node.onclick = this.handleClick; } }
+);
+```
+This will provide the `div` its onclick behaviour.
+node elements that have already been binded will get an attribute `data-js-binded="true"` and will not be rebinded, unless `forceBind === true`.

@@ -1,3 +1,5 @@
+import errors from '../etc/errors.js';
+
 const rootIdentifier = 'root';
 
 /**
@@ -6,11 +8,15 @@ const rootIdentifier = 'root';
  * @param {Node} current
  * @param {Node} plan
  */
-function update(current, plan) {
+function update(current, plan, controllers, forceBind = false) {
   const oldMap = map(current),
     newMap = map(plan);
 
-  rebuildTree(current, oldMap, newMap);
+  rebuildTree(oldMap, newMap);
+
+  if (controllers) {
+    bind(current, controllers, forceBind);
+  }
 }
 
 /**
@@ -57,7 +63,7 @@ const nodeTypes = {
   12: 'Notation'
 };
 
-function rebuildTree(root, oldMap, newMap) {
+function rebuildTree(oldMap, newMap) {
   const idToNode = id =>
     (oldMap.has(id) ? oldMap.get(id) : newMap.get(id)).node;
 
@@ -193,4 +199,34 @@ function getNodeIdentifierByItsParent(parentNode, node) {
   ).indexOf(node)}]`;
 }
 
-export default { update, map };
+
+function bind (root, controllers, force = false) {
+  const errorList = [];
+
+  let stack = [root];
+
+  while (stack.length) {
+    let node = stack.pop();
+
+    if (node.getAttribute) {
+      let controller = node.getAttribute('data-js');
+
+      if (controller) {
+        if (controllers[controller]) {
+          if (force || !node.getAttribute('data-js-binded')) {
+            controllers[controller](node);
+            node.setAttribute('data-js-binded', true);  
+          }
+        } else {
+          errorList.push(new errors.NotFound('controller not found', controller));
+        }
+      }
+    }
+
+    stack = stack.concat(Array.from(node.childNodes || []));
+  }
+
+  return errorList;
+}
+
+export default { bind, update, map };
