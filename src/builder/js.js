@@ -1,7 +1,9 @@
+import fs from 'fs';
 import rollup from 'rollup';
 import babel from 'babel-core';
 import UglifyJS from 'uglify-js';
 import mapper from './mapper.js';
+import Errors from '../etc/Errors.js';
 
 const importPattern = `import.*(["\\'])(.*\\.js)\\1`,
   defaultFormat = 'cjs';
@@ -23,7 +25,7 @@ class JS {
    */
   compile(options) {
     let filenames,
-      external = [],
+      external = this.getExternalsFromPackageJson(),
       globals = {},
       format = defaultFormat;
 
@@ -33,10 +35,8 @@ class JS {
         filenames = options;
       } else {
         // options is a complex object
-        filenames = Array.isArray(options.source)
-          ? [...options.source]
-          : [options.source];
-        external = options.external || external;
+        filenames = this.getArray(options.source);
+        external = external.concat(this.getArray(options.external || []));
         format = options.format || format;
         globals = options.globals || globals;
       }
@@ -45,26 +45,45 @@ class JS {
       filenames = [options];
     }
 
-    return this.loadFiles(filenames, format, external, globals).then(
-      fileSet => {
-        if (fileSet.content.length === 0) {
-          return fileSet;
-        }
+    return this.loadFiles(filenames, format, external, globals)
+      .then(
+        fileSet => {
+          if (fileSet.content.length === 0) {
+            return fileSet;
+          }
 
-        return this.transpile(fileSet.content)
-          .then(this.minify)
-          .then(transpiledAndUglified => {
-            fileSet.content = transpiledAndUglified;
-            return fileSet;
-          })
-          .catch(err => {
-            console.error('build.js.transpile: ', err);
-            return fileSet;
-          });
-      }
-    );
+          return this.transpile(fileSet.content)
+            .then(this.minify)
+            .then(transpiledAndUglified => {
+              fileSet.content = transpiledAndUglified;
+              return fileSet;
+            })
+            .catch(err => {
+              console.error('build.js.transpile: ', err);
+              return fileSet;
+            });
+        }
+      );
   }
 
+  /**
+   * Return an array of the current-folder package.json's dependencies and devDependencies
+   * If no package.json found, returns and empty array silently
+   */
+  getExternalsFromPackageJson() {
+    if (fs.existsSync('./package.json')) {
+      const packageJson = JSON.parse(fs.readFileSync('./package.json','utf-8'));
+
+      return [...Object.keys(packageJson.dependencies  || {}), ...Object.keys(packageJson.devDependencies || {})];
+    }
+
+    return [];
+  }
+
+  getArray(item) {
+    return Array.isArray(item)  ? [...item] : [item];
+  }
+  
   /**
    * Returns a promise for a minified js code, if bad code is provided it would reject with a syntax error
    * @param {String} jsCode code
@@ -132,8 +151,11 @@ class JS {
         files: result.modules,
         content: result.code
       }))
+      .then(res => {
+        return res;
+      })
       .catch(err => {
-        this.handleError(err);
+        this.handleError(new Errors.Custom('loadFile',input, err));
         return { files: [], content: '' };
       });
   }

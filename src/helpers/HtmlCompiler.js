@@ -1,4 +1,4 @@
-import errors from '../etc/errors.js';
+import Errors from '../etc/Errors.js';
 
 const delimiters = [{ start: '{{', end: '}}' }], // delimiters array as you switch to temporary delimiters and then revert back
   patterns = {
@@ -70,7 +70,7 @@ function buildPatterns(start, end) {
 
 function render(templates, locale, data, templateName) {
   if (templates[templateName] === undefined) {
-    throw new errors.NotFound('template not found', templateName);
+    throw new Errors.NotFound('template not found', templateName);
   }
 
   return populate(templates, locale, data, templates[templateName]);
@@ -144,7 +144,7 @@ function populate(templates, locale, data, string) {
           array.push(populate(templates, locale, value, item[5]));
         }
       } else {
-        throw new errors.BadInput('bad iterator', item[1]);
+        throw new Errors.BadInput('bad iterator', item[1]);
       }
     }
 
@@ -305,11 +305,11 @@ class HTMLCompiler {
    */
   constructor(domParser, xmlSerializer) {
     if (domParser === undefined) {
-      throw new errors.MissingInput('domParser');
+      throw new Errors.MissingInput('domParser');
     }
 
     if (xmlSerializer === undefined) {
-      throw new errors.MissingInput('xmlSerializer');
+      throw new Errors.MissingInput('xmlSerializer');
     }
 
     this.domParser = domParser;

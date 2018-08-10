@@ -24,6 +24,10 @@ class Custom extends DetailedError {
   constructor(action, description, error) {
     super('custom-error', 500, { key: action, value: description }, error);
   }
+
+  toString() {
+    return `Error when trying ${this.details.key} ${this.details.value} (${this.stack.toString()})`;
+  }
 }
 class Expired extends DetailedError {
   constructor(varName) {

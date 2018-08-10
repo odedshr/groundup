@@ -2,14 +2,26 @@ import { once, live } from './build.js';
 import colors from '../etc/console-colors.js';
 import fs from 'fs';
 
-const stdin = process.stdin;
+function getMapFiles() {
+  const maps = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
+  if (maps.length === 0 && fs.existsSync('./package.json')) {
+    let appMap = JSON.parse(fs.readFileSync('./package.json')).applicationMap;
 
-let args = process.argv.slice(
-    process.argv.indexOf(process.mainModule.filename) + 1
-  ),
+    if (appMap !== undefined) {
+      maps.push(appMap);
+    }
+  }
+  if (maps.length === 0 && fs.existsSync('./app.map.json')) {
+    maps.push('./app.map.json');
+  }
+  return maps;
+}
+
+const stdin = process.stdin,
   isLive = process.argv.indexOf('--live') > -1,
   isBuildNow = !isLive || process.argv.indexOf('--build-now') > -1,
-  mapFiles = args.filter(arg => !arg.startsWith('--'));
+  mapFiles = getMapFiles();
+
 
 if (mapFiles.length === 0) {
   console.log('Usage: node build.js [--live [--build-now]] app.map.json');

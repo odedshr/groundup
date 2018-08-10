@@ -1,7 +1,7 @@
 /*global xit */
 const assert = require('assert'),
   fs = require('fs'),
-  build = require('../../dist/builder.js').build;
+  build = require('../../.bin/builder.js').build;
 
 describe('builder', () => {
   const appMap = JSON.parse(
@@ -37,12 +37,33 @@ describe('builder', () => {
       appMap.entries['main.js'].source.push('this-file-dosnt-exists.js');
       build.onError(error => {
         assert.equal(
-          ('' + error).replace(new RegExp(process.cwd(), 'g'), ''),
-          'Error: Could not resolve entry (/tests/resources/this-file-dosnt-exists.js)'
+          ('' + error.toString()).replace(new RegExp(process.cwd(), 'g'), ''),
+          'Error when trying loadFile /tests/resources/this-file-dosnt-exists.js (Error: Could not resolve entry (/tests/resources/this-file-dosnt-exists.js))'
         );
       });
       build
         .once(appMap)
+        .then(() => {
+          assert.equal(
+            JSON.stringify(fs.readdirSync(appMap.target)),
+            buildOutput
+          );
+        })
+        .catch(err => err)
+        .then(done);
+    });
+
+    it('should provide empty bundle names', done => {
+      build.onError(error => {
+        assert.equal(
+          ('' + error.toString()).replace(new RegExp(process.cwd(), 'g'), ''),
+          'Error when trying loadFile /tests/resources/this-file-dosnt-exists.js (Error: Could not resolve entry (/tests/resources/this-file-dosnt-exists.js))'
+        );
+      });
+      build
+        .once(JSON.parse(
+          fs.readFileSync('./tests/resources/empty-bundle.map.json', 'utf-8')
+        ))
         .then(() => {
           assert.equal(
             JSON.stringify(fs.readdirSync(appMap.target)),

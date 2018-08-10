@@ -59,7 +59,7 @@
   "description": "Background scripts and tools for my apps",
   "homepage": "https://github.com/odedshr/groundup#readme",
   "license": "ISC",
-  "main": "dist/groundup.js",
+  "main": ".bin/groundup.js",
   "name": "groundup",
   "repository": {
     "type": "git",
@@ -68,7 +68,7 @@
   "scripts": {
     "build": "node ./src/builder-facade/Builder.js ./src/app.map.json",
     "prepublish": "node ./scripts/compile-groundup.js",
-    "test": "./node_modules/mocha/bin/mocha src/helpers/DOMinion.test.js --exit"
+    "test": "./node_modules/mocha/bin/mocha src/**/*.test.js --exit"
   },
   "prettier": {
     "singleQuote": true

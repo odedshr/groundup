@@ -1,5 +1,6 @@
 import DOMinion from './helpers/DOMinion.js';
 import HtmlCompiler from './helpers/HtmlCompiler.js';
-import errors from './etc/errors.js';
+import Errors from './etc/Errors.js';
+import colors from './etc/console-colors.js';
 
-export default { errors, HtmlCompiler, DOMinion };
+export default { colors, Errors, HtmlCompiler, DOMinion };

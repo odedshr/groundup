@@ -1,5 +1,3 @@
-'use strict';
-
 class DetailedError extends Error {
   constructor(message, status, details, stack) {
     super(...arguments);
@@ -25,6 +23,10 @@ class BadInput extends DetailedError {
 class Custom extends DetailedError {
   constructor(action, description, error) {
     super('custom-error', 500, { key: action, value: description }, error);
+  }
+
+  toString() {
+    return `Error when trying ${this.details.key} ${this.details.value} (${this.stack.toString()})`;
   }
 }
 class Expired extends DetailedError {
@@ -103,7 +105,7 @@ class Unauthorized extends DetailedError {
   }
 }
 
-var errors = {
+var Errors = {
   AlreadyExists,
   BadInput,
   Custom,
@@ -337,7 +339,7 @@ function bind (root, controllers, force = false) {
             node.setAttribute('data-js-binded', true);  
           }
         } else {
-          errorList.push(new errors.NotFound('controller not found', controller));
+          errorList.push(new Errors.NotFound('controller not found', controller));
         }
       }
     }
@@ -420,7 +422,7 @@ function buildPatterns(start, end) {
 
 function render(templates, locale, data, templateName) {
   if (templates[templateName] === undefined) {
-    throw new errors.NotFound('template not found', templateName);
+    throw new Errors.NotFound('template not found', templateName);
   }
 
   return populate(templates, locale, data, templates[templateName]);
@@ -494,7 +496,7 @@ function populate(templates, locale, data, string) {
           array.push(populate(templates, locale, value, item[5]));
         }
       } else {
-        throw new errors.BadInput('bad iterator', item[1]);
+        throw new Errors.BadInput('bad iterator', item[1]);
       }
     }
 
@@ -655,11 +657,11 @@ class HTMLCompiler {
    */
   constructor(domParser, xmlSerializer) {
     if (domParser === undefined) {
-      throw new errors.MissingInput('domParser');
+      throw new Errors.MissingInput('domParser');
     }
 
     if (xmlSerializer === undefined) {
-      throw new errors.MissingInput('xmlSerializer');
+      throw new Errors.MissingInput('xmlSerializer');
     }
 
     this.domParser = domParser;
@@ -732,6 +734,50 @@ class HTMLCompiler {
   }
 }
 
-var index = { errors, HtmlCompiler: HTMLCompiler, DOMinion };
+var colors = {
+  Reset: '\x1b[0m',
+  Bright: '\x1b[1m',
+  Dim: '\x1b[2m',
+  Underscore: '\x1b[4m',
+  Blink: '\x1b[5m',
+  Reverse: '\x1b[7m',
+  Hidden: '\x1b[8m',
 
-module.exports = index;
+  FgBlack: '\x1b[30m',
+  FgRed: '\x1b[31m',
+  FgGreen: '\x1b[32m',
+  FgYellow: '\x1b[33m',
+  FgBlue: '\x1b[34m',
+  FgMagenta: '\x1b[35m',
+  FgCyan: '\x1b[36m',
+  FgWhite: '\x1b[37m',
+
+  BgBlack: '\x1b[40m',
+  BgRed: '\x1b[41m',
+  BgGreen: '\x1b[42m',
+  BgYellow: '\x1b[43m',
+  BgBlue: '\x1b[44m',
+  BgMagenta: '\x1b[45m',
+  BgCyan: '\x1b[46m',
+  BgWhite: '\x1b[47m',
+
+  sets: [
+    ['bgBlack', 'white'],
+    ['bgBlack', 'red'],
+    ['bgBlack', 'green'],
+    ['black', 'blue'],
+    ['bgBlack', 'yellow'],
+    ['bgBlack', 'magenta'],
+    ['bgBlack', 'cyan'],
+    ['bgWhite', 'red'],
+    ['bgWhite', 'green'],
+    ['bgWhite', 'blue'],
+    ['bgWhite', 'magenta'],
+    ['bgWhite', 'cyan'],
+    ['bgWhite', 'black']
+  ],
+};
+
+var index = { colors, Errors, HtmlCompiler: HTMLCompiler, DOMinion };
+
+export default index;

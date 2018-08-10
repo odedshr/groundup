@@ -1,4 +1,4 @@
-import errors from '../etc/errors.js';
+import Errors from '../etc/Errors.js';
 
 const rootIdentifier = 'root';
 
@@ -218,7 +218,7 @@ function bind (root, controllers, force = false) {
             node.setAttribute('data-js-binded', true);  
           }
         } else {
-          errorList.push(new errors.NotFound('controller not found', controller));
+          errorList.push(new Errors.NotFound('controller not found', controller));
         }
       }
     }

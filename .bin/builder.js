@@ -40,6 +40,10 @@ class Custom extends DetailedError {
   constructor(action, description, error) {
     super('custom-error', 500, { key: action, value: description }, error);
   }
+
+  toString() {
+    return `Error when trying ${this.details.key} ${this.details.value} (${this.stack.toString()})`;
+  }
 }
 class Expired extends DetailedError {
   constructor(varName) {
@@ -448,7 +452,7 @@ class JS {
    */
   compile(options) {
     let filenames,
-      external = [],
+      external = this.getExternalsFromPackageJson(),
       globals = {},
       format = defaultFormat;
 
@@ -458,10 +462,8 @@ class JS {
         filenames = options;
       } else {
         // options is a complex object
-        filenames = Array.isArray(options.source)
-          ? [...options.source]
-          : [options.source];
-        external = options.external || external;
+        filenames = this.getArray(options.source);
+        external = external.concat(this.getArray(options.external || []));
         format = options.format || format;
         globals = options.globals || globals;
       }
@@ -470,26 +472,45 @@ class JS {
       filenames = [options];
     }
 
-    return this.loadFiles(filenames, format, external, globals).then(
-      fileSet => {
-        if (fileSet.content.length === 0) {
-          return fileSet;
-        }
+    return this.loadFiles(filenames, format, external, globals)
+      .then(
+        fileSet => {
+          if (fileSet.content.length === 0) {
+            return fileSet;
+          }
 
-        return this.transpile(fileSet.content)
-          .then(this.minify)
-          .then(transpiledAndUglified => {
-            fileSet.content = transpiledAndUglified;
-            return fileSet;
-          })
-          .catch(err => {
-            console.error('build.js.transpile: ', err);
-            return fileSet;
-          });
-      }
-    );
+          return this.transpile(fileSet.content)
+            .then(this.minify)
+            .then(transpiledAndUglified => {
+              fileSet.content = transpiledAndUglified;
+              return fileSet;
+            })
+            .catch(err => {
+              console.error('build.js.transpile: ', err);
+              return fileSet;
+            });
+        }
+      );
   }
 
+  /**
+   * Return an array of the current-folder package.json's dependencies and devDependencies
+   * If no package.json found, returns and empty array silently
+   */
+  getExternalsFromPackageJson() {
+    if (fs__default.existsSync('./package.json')) {
+      const packageJson = JSON.parse(fs__default.readFileSync('./package.json','utf-8'));
+
+      return [...Object.keys(packageJson.dependencies  || {}), ...Object.keys(packageJson.devDependencies || {})];
+    }
+
+    return [];
+  }
+
+  getArray(item) {
+    return Array.isArray(item)  ? [...item] : [item];
+  }
+  
   /**
    * Returns a promise for a minified js code, if bad code is provided it would reject with a syntax error
    * @param {String} jsCode code
@@ -557,8 +578,11 @@ class JS {
         files: result.modules,
         content: result.code
       }))
+      .then(res => {
+        return res;
+      })
       .catch(err => {
-        this.handleError(err);
+        this.handleError(new Errors.Custom('loadFile',input, err));
         return { files: [], content: '' };
       });
   }
@@ -739,7 +763,23 @@ var colors = {
   BgBlue: '\x1b[44m',
   BgMagenta: '\x1b[45m',
   BgCyan: '\x1b[46m',
-  BgWhite: '\x1b[47m'
+  BgWhite: '\x1b[47m',
+
+  sets: [
+    ['bgBlack', 'white'],
+    ['bgBlack', 'red'],
+    ['bgBlack', 'green'],
+    ['black', 'blue'],
+    ['bgBlack', 'yellow'],
+    ['bgBlack', 'magenta'],
+    ['bgBlack', 'cyan'],
+    ['bgWhite', 'red'],
+    ['bgWhite', 'green'],
+    ['bgWhite', 'blue'],
+    ['bgWhite', 'magenta'],
+    ['bgWhite', 'cyan'],
+    ['bgWhite', 'black']
+  ],
 };
 
 const defaultHandleError = error => console.error(error),
@@ -758,6 +798,7 @@ const defaultHandleError = error => console.error(error),
  */
 function logged(label, method) {
   const time = new Date();
+
   label = `${padTwoDigits(time.getHours())}:${padTwoDigits(
     time.getMinutes()
   )}:${padTwoDigits(time.getSeconds())} ${label}`;
@@ -774,14 +815,14 @@ function padTwoDigits(num) {
  * loads and parse application maps
  * @param {String} fileName
  * @throws NotFoundError if file not found
- * TBD: check file content for required fields
  */
-function readMapFile(fileName) {
+function readMapFile(mapFile) {
   if (!fs.existsSync(fileName)) {
     throw new Errors.NotFound('map.json', fileName);
   }
 
   return JSON.parse(fs.readFileSync(fileName, 'utf-8'));
+
 }
 
 /**
@@ -793,6 +834,7 @@ function getAbsolutePath(path, file) {
   if (path.length > 0 && !path.match(/\/$/)) {
     path += '/';
   }
+
   return `${process.cwd()}/${(path + file).replace('//', '/')}`;
 }
 
@@ -826,6 +868,7 @@ function getWatcherPromises(output, files$$1, mapFunc, target, handleError) {
     external = options.external;
     files$$1 = files$$1.source;
   }
+
   return files$$1.map(file =>
     mapFunc(file, external).then(results =>
       getWatchers(file, results, output, target, options, handleError)
@@ -846,7 +889,8 @@ function getWatchers(rootFile, files$$1, output, target, options, handleError) {
     return {
       file,
       options,
-      watcher: chokidar.watch(file, (eventType, triggering) => {
+      watcher: chokidar.watch(file)
+      .on('raw', (event, path, details) => {
         if (!timeOut) {
           timeOut = setTimeout(() => {
             logged(
@@ -860,9 +904,9 @@ function getWatchers(rootFile, files$$1, output, target, options, handleError) {
                   output,
                   options || rootFile,
                   getFileType(output),
-                  triggering
+                  path
                 )
-                .catch(handleError)
+                //.catch(handleError)
             );
             timeOut = null;
           }, WATCH_TIMEOUT);
@@ -909,6 +953,7 @@ function writeToFile(
         `${targetPath}/${targetFileName}`
       );
     }
+
     return files.copy(sourceFile, getAbsolutePath(targetPath, targetFileName));
   } else {
     return fileTypeDef.handler.compile(sourceFile).then(response => {
@@ -916,6 +961,7 @@ function writeToFile(
         absoluteTarget.substring(0, absoluteTarget.lastIndexOf('/'))
       );
       fs.writeFileSync(absoluteTarget, response.content);
+
       return response;
     });
   }
@@ -937,6 +983,7 @@ function removeFileIfRedundant(file, entries, destPath) {
         // if entry is a folder containing the file
         return fs.existsSync(`${entry}${file}`);
       }
+
       return false;
     }) &&
     fs.existsSync(`${destPath}${file}`)
@@ -958,6 +1005,7 @@ function getMappedEntries(source, entry) {
     } else {
       let entryCopy = Object.assign({}, entry);
       entryCopy.source = getMappedEntries(source, entryCopy.source);
+
       return entryCopy;
     }
   } else {
@@ -977,7 +1025,11 @@ function once(appMap, handleError = defaultHandleError) {
   }
 
   let source = appMap.source || '',
-    target = appMap.target || '';
+      target = appMap.target || '';
+
+  if (appMap.entries === undefined) {
+    handleError(new Errors.BadInput(mapFile, 'Missing `source` property'));
+  }
 
   return Promise.all(
     Object.keys(appMap.entries).map(entry =>

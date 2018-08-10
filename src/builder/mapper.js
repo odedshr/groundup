@@ -1,5 +1,5 @@
 import fs from 'fs';
-import Errors from '../etc/errors.js';
+import Errors from '../etc/Errors.js';
 
 class Mapper {
   constructor() {

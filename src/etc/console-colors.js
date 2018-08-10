@@ -23,5 +23,21 @@ export default {
   BgBlue: '\x1b[44m',
   BgMagenta: '\x1b[45m',
   BgCyan: '\x1b[46m',
-  BgWhite: '\x1b[47m'
+  BgWhite: '\x1b[47m',
+
+  sets: [
+    ['bgBlack', 'white'],
+    ['bgBlack', 'red'],
+    ['bgBlack', 'green'],
+    ['black', 'blue'],
+    ['bgBlack', 'yellow'],
+    ['bgBlack', 'magenta'],
+    ['bgBlack', 'cyan'],
+    ['bgWhite', 'red'],
+    ['bgWhite', 'green'],
+    ['bgWhite', 'blue'],
+    ['bgWhite', 'magenta'],
+    ['bgWhite', 'cyan'],
+    ['bgWhite', 'black']
+  ],
 };

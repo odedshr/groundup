@@ -22,7 +22,7 @@ const rollup = require('rollup'),
       input: './src/builder/builder-cli.js',
       external,
       output: {
-        file: './dist/builder-cli.js',
+        file: './.bin/builder-cli.js',
         format: 'cjs'
       }
     },
@@ -30,7 +30,7 @@ const rollup = require('rollup'),
       input: './src/builder/builder.js',
       external,
       output: {
-        file: './dist/builder.js',
+        file: './.bin/builder.js',
         format: 'cjs'
       }
     },
@@ -38,7 +38,7 @@ const rollup = require('rollup'),
       input: './src/index.js',
       external,
       output: {
-        file: './dist/groundup.js',
+        file: './.bin/groundup.js',
         format: 'cjs'
       }
     },
@@ -46,7 +46,7 @@ const rollup = require('rollup'),
       input: './src/index.js',
       external,
       output: {
-        file: './dist/groundup.web.js',
+        file: './.bin/groundup.web.js',
         format: 'es'
       }
     }

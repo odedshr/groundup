@@ -1,6 +1,6 @@
 const assert = require('assert'),
   xmldom = require('xmldom'),
-  DOM = require('../../dist/groundup.js').DOMinion,
+  DOM = require('../../.bin/groundup.js').DOMinion,
   parser = new xmldom.DOMParser(),
   serializer = new xmldom.XMLSerializer();
 

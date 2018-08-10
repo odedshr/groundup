@@ -1,7 +1,7 @@
 /*global afterEach */
 const assert = require('assert'),
   fs = require('fs'),
-  files = require('../../dist/builder.js').files;
+  files = require('../../.bin/builder.js').files;
 
 describe('builder.files', () => {
   describe('files.copy()', () => {
@@ -13,7 +13,7 @@ describe('builder.files', () => {
 
     it('should copy file to target folder', () => {
       files.copy('tests/resources/file1.js', 'tests/dist/');
-      assert.equal(fs.existsSync('tests/dist/file1.js'), true);
+      assert.equal(fs.existsSync('tests/dist/file1.js'), true, 'adsfadf');
     });
 
     it('should copy file to target folder to a different name', () => {

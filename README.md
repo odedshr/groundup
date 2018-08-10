@@ -23,18 +23,19 @@ Install with npm:
 ### Building
 Run with node:
 ```
-node ./node-modules/groundup/dist/builder-cli.js [applicationMap] [--live [--build-now]]
+node ./node_modules/groundup/dist/builder-cli.js [applicationMap] [--live [--build-now]]
 ```
-If no parameters given, builder will build target files once and quit.
+If no parameters given, builder will look for the `applicationMap` in the `package.json`, build target files once and quit.
 ```
-node ./node-modules/groundup/dist/builder-cli.js app.map.json
+node ./node_modules/groundup/dist/builder-cli.js app.map1.json app.map2.json
 ```
+with the following two exception, other arguments will be treated as paths to applications-maps (each handled seperately)
 
 - `--live` (optional) would keep the builder running and watching for changes in source files
 
 - `--build-now` (optional, relevant only in `--live` mode) will build the target files and start watching source files
 ```
-node ./node-modules/groundup/dist/builder-cli.js app.map.json --live --build-now
+node ./node_modules/groundup/dist/builder-cli.js app.map.json --live --build-now
 ```
 
 #### The application map

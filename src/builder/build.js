@@ -1,6 +1,7 @@
+
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import { watch } from 'chokidar';
-import errors from '../etc/errors.js';
+import Errors from '../etc/Errors.js';
 import colors from '../etc/console-colors.js';
 import css from './css.js';
 import html from './html.js';
@@ -23,6 +24,7 @@ const defaultHandleError = error => console.error(error),
  */
 function logged(label, method) {
   const time = new Date();
+
   label = `${padTwoDigits(time.getHours())}:${padTwoDigits(
     time.getMinutes()
   )}:${padTwoDigits(time.getSeconds())} ${label}`;
@@ -39,14 +41,14 @@ function padTwoDigits(num) {
  * loads and parse application maps
  * @param {String} fileName
  * @throws NotFoundError if file not found
- * TBD: check file content for required fields
  */
-function readMapFile(fileName) {
+function readMapFile(mapFile) {
   if (!existsSync(fileName)) {
-    throw new errors.NotFound('map.json', fileName);
+    throw new Errors.NotFound('map.json', fileName);
   }
 
   return JSON.parse(readFileSync(fileName, 'utf-8'));
+
 }
 
 /**
@@ -58,6 +60,7 @@ function getAbsolutePath(path, file) {
   if (path.length > 0 && !path.match(/\/$/)) {
     path += '/';
   }
+
   return `${process.cwd()}/${(path + file).replace('//', '/')}`;
 }
 
@@ -91,6 +94,7 @@ function getWatcherPromises(output, files, mapFunc, target, handleError) {
     external = options.external;
     files = files.source;
   }
+
   return files.map(file =>
     mapFunc(file, external).then(results =>
       getWatchers(file, results, output, target, options, handleError)
@@ -111,7 +115,8 @@ function getWatchers(rootFile, files, output, target, options, handleError) {
     return {
       file,
       options,
-      watcher: watch(file, (eventType, triggering) => {
+      watcher: watch(file)
+      .on('raw', (event, path, details) => {
         if (!timeOut) {
           timeOut = setTimeout(() => {
             logged(
@@ -125,9 +130,9 @@ function getWatchers(rootFile, files, output, target, options, handleError) {
                   output,
                   options || rootFile,
                   getFileType(output),
-                  triggering
+                  path
                 )
-                .catch(handleError)
+                //.catch(handleError)
             );
             timeOut = null;
           }, WATCH_TIMEOUT);
@@ -174,6 +179,7 @@ function writeToFile(
         `${targetPath}/${targetFileName}`
       );
     }
+
     return files.copy(sourceFile, getAbsolutePath(targetPath, targetFileName));
   } else {
     return fileTypeDef.handler.compile(sourceFile).then(response => {
@@ -181,6 +187,7 @@ function writeToFile(
         absoluteTarget.substring(0, absoluteTarget.lastIndexOf('/'))
       );
       writeFileSync(absoluteTarget, response.content);
+
       return response;
     });
   }
@@ -202,6 +209,7 @@ function removeFileIfRedundant(file, entries, destPath) {
         // if entry is a folder containing the file
         return existsSync(`${entry}${file}`);
       }
+
       return false;
     }) &&
     existsSync(`${destPath}${file}`)
@@ -223,6 +231,7 @@ function getMappedEntries(source, entry) {
     } else {
       let entryCopy = Object.assign({}, entry);
       entryCopy.source = getMappedEntries(source, entryCopy.source);
+
       return entryCopy;
     }
   } else {
@@ -242,7 +251,11 @@ function once(appMap, handleError = defaultHandleError) {
   }
 
   let source = appMap.source || '',
-    target = appMap.target || '';
+      target = appMap.target || '';
+
+  if (appMap.entries === undefined) {
+    handleError(new Errors.BadInput(mapFile, 'Missing `source` property'));
+  }
 
   return Promise.all(
     Object.keys(appMap.entries).map(entry =>
