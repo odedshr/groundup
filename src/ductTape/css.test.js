@@ -1,38 +1,30 @@
 const assert = require('assert'),
-  css = require('../../.bin/builder.js').css;
+  css = require('../../.bin/ductTape.js').css;
 
-describe('builder.css', () => {
+describe('ductTape.css', () => {
   describe('css.mapFile', () => {
-    it('should get map file and its dependencies', done => {
-      css
-        .mapFile('./tests/resources/file2.less')
-        .then(output => {
-          assert.equal(
-            JSON.stringify(output),
-            '["./tests/resources/file2.less","./tests/resources/subfolder/file2.1.less"]'
-          );
-          done();
-        })
-        .catch(done);
+    it('should get map file and its dependencies', () => {
+      const map = css.mapFile('./tests/resources/file2.less');
+
+      assert.equal(
+        JSON.stringify(map),
+        '["./tests/resources/file2.less","./tests/resources/subfolder/file2.1.less"]'
+      );
     });
 
-    it('should ignore missing dependencies', done => {
+    it('should ignore missing dependencies', () => {
       css.onError(err =>
         assert.equal(
           err.details.value,
           "./tests/resources/import-doesn't-exists.less"
         )
       );
-      css
-        .mapFile('./tests/resources/missing-import.less')
-        .then(output => {
-          assert.equal(
-            JSON.stringify(output),
-            '["./tests/resources/missing-import.less","./tests/resources/subfolder/file2.1.less"]'
-          );
-          done();
-        })
-        .catch(done);
+
+      const map = css.mapFile('./tests/resources/file2.less');
+      assert.equal(
+        JSON.stringify(map),
+        '["./tests/resources/file2.less","./tests/resources/subfolder/file2.1.less"]'
+      );
     });
   });
 

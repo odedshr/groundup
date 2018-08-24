@@ -1,15 +1,14 @@
 const assert = require('assert'),
-  js = require('../../.bin/builder.js').js;
+  js = require('../../.bin/ductTape.js').js;
 
-describe('builder.javascript', () => {
+describe('ductTape.javascript', () => {
   describe('js.mapFile', () => {
-    it('should get map file and its dependencies', done => {
-      js.mapFile('./tests/resources/file1.js')
-        .then(output => assert.equal(
-          JSON.stringify(output),
-          '["./tests/resources/file1.js","./tests/resources/file1.1.js"]'
-        ))
-        .then(done);
+    it('should get map file and its dependencies', () => {
+      const map = js.mapFile('./tests/resources/file1.js');
+      assert.equal(
+        JSON.stringify(map),
+        '["./tests/resources/file1.js","./tests/resources/file1.1.js"]'
+      )
     });
   });
 

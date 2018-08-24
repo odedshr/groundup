@@ -1,7 +1,9 @@
 {
-  "source": "tests/resources",
-  "target": "tests/dist",
-  "entries": {
-    "webWorker.js": ["this-file-dosnt-exists.js"]
+  "ductTape": {
+    "source": "tests/resources",
+    "target": "tests/dist",
+    "entries": {
+      "webWorker.js": ["this-file-dosnt-exists.js"]
+    }
   }
 }

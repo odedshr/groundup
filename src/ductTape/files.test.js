@@ -1,9 +1,9 @@
 /*global afterEach */
 const assert = require('assert'),
   fs = require('fs'),
-  files = require('../../.bin/builder.js').files;
+  files = require('../../.bin/ductTape.js').files;
 
-describe('builder.files', () => {
+describe('ductTape.files', () => {
   describe('files.copy()', () => {
     afterEach(() => {
       if (fs.existsSync('tests/dist/')) {
@@ -23,18 +23,18 @@ describe('builder.files', () => {
 
     it('should copy folder to target folder', () => {
       files.copy('tests/resources/subfolder', 'tests/dist/');
-      assert.equal(fs.existsSync('tests/dist/subfolder/file2.1.html'), true);
+      assert.equal(fs.existsSync('tests/dist/file2.1.html'), true);
     });
 
     it('should copy folder with a subfolder to target folder', () => {
       files.copy('tests/resources/subfolder', 'tests/dist/');
-      assert.equal(fs.existsSync('tests/dist/subfolder/file2.1.html'), true);
+      assert.equal(fs.existsSync('tests/dist/file2.1.html'), true);
     });
 
     it('should copy file withing folder to target folder', () => {
       files.copy('tests/resources/subfolder', 'tests/dist/');
       assert.equal(
-        fs.existsSync('tests/dist/subfolder/subfolder2/file3.html'),
+        fs.existsSync('tests/dist/subfolder2/file3.html'),
         true
       );
     });

@@ -372,6 +372,9 @@ function buildPatterns(start, end) {
   // simple replace {{name}}
   patterns.std = new RegExp(start + '([^#]+?)' + end, 'g');
 
+  // htmlReplace replace {{{name}}}
+  patterns.htmlSafe = new RegExp(start + '{([^#]+?)}' + end, 'g');
+
   // translate the string {{#btn.ok}}
   patterns.lng = new RegExp(start + '#(.+?)' + end, 'g');
 
@@ -519,20 +522,37 @@ function populate(templates, locale, data, string) {
       .join(getValue(templates, locale, data, item[1]) ? item[2] : '');
   }
 
-  // 6. look for standard replacements
-  while ((item = find(patterns.std, string)) !== null) {
+  // 6. look for an unescaped replacements
+  while ((item = find(patterns.htmlSafe, string)) !== null) {
     string = string
       .split(item[0])
       .join(toString(getValue(templates, locale, data, item[1])));
   }
+  
+  // 7. look for standard replacements
+  while ((item = find(patterns.std, string)) !== null) {
+    string = string
+      .split(item[0])
+      .join(escapeHtml(toString(getValue(templates, locale, data, item[1]))));
+  }
 
-  // 7. look for translations
+  // 8. look for translations
   while ((item = find(patterns.lng, string)) !== null) {
     string = string.split(item[0]).join(translate(locale, item[1]));
   }
 
   return string;
 }
+
+function escapeHtml(unsafe) {
+    return unsafe.replace(/</g, '&lt;');
+        // for whatever readon, xmldom.DOMParser.parseFromString convert &gt; to >
+        // so it causes a mess and better leave it unescaped
+        // .replace(/&/g, '&amp;')
+        // .replace(/"/g, '&quot;')
+        // .replace(/'/g, '&#039;');
+        //         .replace(/>/g, '&gt;')
+ }
 
 function translate(locale, value) {
   var translated = locale[value];
@@ -714,24 +734,20 @@ class HTMLCompiler {
    * The string of every child needing to be replaced will also be rendered first, recursively.
    */
   compileToString(templates, locale, data, seedString) {
-    let compiledXML = this.compileToXML(templates, locale, data, seedString);
+    let compiledXML = this.compileToXML(templates, locale, data, '<html-compiler>'+seedString+'</html-compiler>');
 
-    if (compiledXML.childNodes[0].tagName === undefined) {
-      // it looks like xml but it's actually simple text
-      return compiledXML.childNodes[0].data;
-    }
-
-    return fixVoidElements(this.xmlSerializer.serializeToString(compiledXML));
+    return fixVoidElements(this.xmlSerializer.serializeToString(compiledXML)
+      .replace(/^<html-compiler>(.*)<\/html-compiler>$/,'$1'));
   }
 
   compileToXML(templates, locale, data, seedString) {
-    let renderedSeedXML = populate(templates, locale, data, seedString);
+    let renderedSeedString = populate(templates, locale, data, seedString);
 
     return this.compile(
       templates,
       locale,
       data,
-      this.domParser.parseFromString(renderedSeedXML)
+      this.domParser.parseFromString(renderedSeedString)
     );
   }
 }

@@ -1,41 +1,42 @@
-import { once, live } from './build.js';
+import builder from './builder.js';
 import colors from '../etc/console-colors.js';
 import fs from 'fs';
 
 function getMapFiles() {
-  const maps = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
-  if (maps.length === 0 && fs.existsSync('./package.json')) {
-    let appMap = JSON.parse(fs.readFileSync('./package.json')).applicationMap;
+  const maps = process.argv.slice(2).filter(arg => !arg.startsWith('--')),
+    packageFileName = './package.json',
+    defaultFileName = './app.map.json';
 
-    if (appMap !== undefined) {
-      maps.push(appMap);
-    }
+  if (maps.length === 0 && fs.existsSync(defaultFileName)) {
+    maps.push(defaultFileName);
   }
-  if (maps.length === 0 && fs.existsSync('./app.map.json')) {
-    maps.push('./app.map.json');
+
+  if (maps.length === 0 && fs.existsSync(defaultFileName)) {
+    maps.push(packageFileName);
   }
+
   return maps;
 }
 
 const stdin = process.stdin,
-  isLive = process.argv.indexOf('--live') > -1,
-  isBuildNow = !isLive || process.argv.indexOf('--build-now') > -1,
+  isWatching = process.argv.indexOf('--watch') > -1,
+  isBuildNow = !isWatching || process.argv.indexOf('--build-now') > -1,
   mapFiles = getMapFiles();
 
 
 if (mapFiles.length === 0) {
-  console.log('Usage: node build.js [--live [--build-now]] app.map.json');
+  console.log('Usage: node build.js [--watch [--build-now]] app.map.json');
   process.exit(1);
 }
 
 mapFiles.forEach(fileName => {
   if (fs.existsSync(fileName)) {
     if (isBuildNow) {
-      once(fileName);
+      builder.build(fileName);
     }
 
-    if (isLive) {
-      live(fileName);
+    if (isWatching) {
+      builder.watch(fileName);
     }
   } else {
     console.error(
@@ -47,7 +48,7 @@ mapFiles.forEach(fileName => {
   }
 });
 
-if (isLive) {
+if (isWatching) {
   console.log('Watching for changes. Hit ctrl-c to stop.');
 
   // without this, we would only get streams once enter is pressed

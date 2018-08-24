@@ -1,0 +1,14 @@
+{
+  "ductTape": {
+    "source": "tests/resources",
+    "target": "tests/dynamic-dist-1534968773467",
+    "entries": {
+      "*": [
+        "dynamic.map.json"
+      ],
+      "entry.html": [
+        "file1.html"
+      ]
+    }
+  }
+}

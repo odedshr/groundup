@@ -19,18 +19,18 @@ const rollup = require('rollup'),
   ],
   config = [
     {
-      input: './src/builder/builder-cli.js',
+      input: './src/ductTape/ductTape-cli.js',
       external,
       output: {
-        file: './.bin/builder-cli.js',
+        file: './.bin/ductTape-cli.js',
         format: 'cjs'
       }
     },
     {
-      input: './src/builder/builder.js',
+      input: './src/ductTape/ductTape.js',
       external,
       output: {
-        file: './.bin/builder.js',
+        file: './.bin/ductTape.js',
         format: 'cjs'
       }
     },

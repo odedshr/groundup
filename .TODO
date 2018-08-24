@@ -1,6 +1,0 @@
-[x] find app.map.json default file
-[?] static copy "folder/" should copy folder content and not its root folder
-[!] "Generated an empty bundle" - provide bundle name
-[ ] handle chokidar remove files (https://www.npmjs.com/package/chokidar)
-  [ ] https://developers.google.com/web/updates/2018/07/page-lifecycle-api
-[ ] force texts in templates

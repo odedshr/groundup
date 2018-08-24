@@ -316,11 +316,11 @@ class CSS {
   }
 
   /**
-   * Returns a promise for a list of all files linked by `import` to the input file
+   * Returns a list of all files linked by `import` to the input file
    * @param {String} fileName
    */
   mapFile(fileName) {
-    return new Promise(resolve => resolve(mapper.map(fileName, importPattern)));
+    return mapper.map(fileName, importPattern);
   }
 
   /**
@@ -404,11 +404,11 @@ class HTML {
   }
 
   /**
-   * Returns a promise for a list of all files linked by `import` to the input file
+   * Returns a list of all files linked by `import` to the input file
    * @param {String} fileName
    */
   mapFile(fileName) {
-    return new Promise(resolve => resolve(mapper.map(fileName, importPattern$1)));
+    return mapper.map(fileName, importPattern$1);
   }
 
   /**
@@ -535,13 +535,11 @@ class JS {
   }
 
   /**
-   * Returns a promise for a list of all files linked by `import` to the input file
+   * Returns a list of all files linked by `import` to the input file
    * @param {String} fileName
    */
   mapFile(fileName, options = []) {
-    return new Promise(resolve =>
-      resolve(mapper.map(fileName, importPattern$2, options))
-    );
+    return mapper.map(fileName, importPattern$2, options);
   }
 
   /**
@@ -604,24 +602,38 @@ const copyFile =
   ((file, fileTarget) => fs.writeFileSync(fileTarget, fs.readFileSync(file)));
 
 /**
- * Return the file's target path by merging by replacing the sourcePath with targetPath
+ * @returns the file's target path by merging by replacing the sourcePath with targetPath
  * If source path contains /** /*.*' it is ignored
  * @param {String} file
  * @param {String} sourcePath
  * @param {String} targetPath
  */
 function getFileTargt(file, sourcePath, targetPath) {
+  sourcePath = sourcePath.replace('/**/*.*', '');
+  file = file.replace(sourcePath, '');
+  
+  // copying a folder
   if (file === sourcePath) {
-    return targetPath + file.substr(file.lastIndexOf('/'));
+    return targetPath + file.substr(file.lastIndexOf('/') + 1);
   }
 
+  // copy a file to a new folder
   if (targetPath.match(/\/$/)) {
     return (
-      targetPath + file.replace(sourcePath.replace('/**/*.*', '') + '/', '')
+      targetPath + file.replace(sourcePath.replace('/**/*.*', ''), '')
     );
   }
-
+  
+  // copy to file target as is
   return targetPath;
+}
+
+/**
+ * @returns the the file's path, if item is a folder, return it as it is
+ * @param {*} path 
+ */
+function getFileFolder(path) {
+  return fs.lstatSync(path.replace('/**/*.*','')).isDirectory() ? path : path.substr(0, path.lastIndexOf('/'));
 }
 
 var files = {
@@ -632,11 +644,11 @@ var files = {
    */
   copy(source, target) {
     const handleFile = (task, file) => {
-      let fileTarget = getFileTargt(file, task.source, task.target);
+      let fileTarget = getFileTargt(file, getFileFolder(task.source), task.target);
 
       if (fs.lstatSync(file).isDirectory()) {
         this.addPath(fileTarget);
-        sources.push({ source: `${file}/**/*.*`, target: fileTarget + '/' });
+        sources.push({ source: `${file}/**/*.*`, target: fileTarget.replace(/\/$/,'') + '/' });
       } else {
         promises.push(
           new Promise((resolve, reject) => {
@@ -648,7 +660,7 @@ var files = {
               );
               reject(err);
             } else {
-              resolve();
+              resolve(fileTarget);
             }
           })
         );
@@ -671,11 +683,11 @@ var files = {
   },
 
   /**
-   * Returns a promise for a list of all files matching the fileName pattern
+   * Returns a list of all files matching the fileName pattern
    * @param {String} fileName
    */
   mapFile(fileName) {
-    return new Promise(resolve => resolve(glob.sync(fileName, {})));
+    return glob.sync(fileName, {});
   },
 
   /**
@@ -783,8 +795,17 @@ var colors = {
 };
 
 const defaultHandleError = error => console.error(error),
-  WATCH_TIMEOUT = 2000,
+  mapHandler = {
+    mapFile(file) {
+      return [file];
+    },
+    compile(file) {
+      throw Errors.BadInput('mapFile', file);
+    }
+  },
+  // handler is an object { mapFile, compile(optional) }
   types = new Map([
+    ['map', { regExp: /^\*$/, id: 'map', handler: mapHandler }],
     ['js', { regExp: /\.js$/, id: 'js', handler: js }],
     ['css', { regExp: /\.css$/, id: 'css', handler: css }],
     ['html', { regExp: /\.html$/, id: 'html', handler: html }],
@@ -796,14 +817,19 @@ const defaultHandleError = error => console.error(error),
  * @param {String} label
  * @param {Function} method
  */
-function logged(label, method) {
-  const time = new Date();
-
-  label = `${padTwoDigits(time.getHours())}:${padTwoDigits(
-    time.getMinutes()
-  )}:${padTwoDigits(time.getSeconds())} ${label}`;
+function logged(verb, subject, method, handleError) {
+  const time = new Date(),
+    label = `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:` +
+    `${padTwoDigits(time.getSeconds())} ${colors.FgGreen}✓${colors.Reset} ` +
+    `${colors.Dim}${verb}${colors.Reset} ${colors.FgCyan}${subject}${colors.Reset}`;
+  
   console.time(label);
-  method();
+  try {
+    method();
+  }
+  catch (err) {
+    handleError(err);
+  }
   console.timeEnd(label);
 }
 
@@ -816,104 +842,12 @@ function padTwoDigits(num) {
  * @param {String} fileName
  * @throws NotFoundError if file not found
  */
-function readMapFile(mapFile) {
-  if (!fs.existsSync(fileName)) {
-    throw new Errors.NotFound('map.json', fileName);
+function readMapFile(mapFileName) {
+  if (!fs.existsSync(mapFileName)) {
+    throw new Errors.NotFound('map.json', mapFileName);
   }
 
-  return JSON.parse(fs.readFileSync(fileName, 'utf-8'));
-
-}
-
-/**
- * Returns an absolute path for a file
- * @param {String} path
- * @param {String} file
- */
-function getAbsolutePath(path, file) {
-  if (path.length > 0 && !path.match(/\/$/)) {
-    path += '/';
-  }
-
-  return `${process.cwd()}/${(path + file).replace('//', '/')}`;
-}
-
-/**
- * Returns a Map of fileName => absolute values
- * @param {String} path
- * @param {Strings[]} entries array of file name
- */
-function getAbsolutePathes(path, entries) {
-  let map = new Map();
-
-  Object.keys(entries).forEach(entry =>
-    map.set(entry, getMappedEntries(path, entries[entry]))
-  );
-
-  return map;
-}
-
-/**
- * Returns
- * @param {String} output fileName
- * @param {Strings[]} files to watch
- * @param {Function} mapFunc
- * @param {String} target folder
- */
-function getWatcherPromises(output, files$$1, mapFunc, target, handleError) {
-  let options, external;
-
-  if (files$$1.source) {
-    options = files$$1;
-    external = options.external;
-    files$$1 = files$$1.source;
-  }
-
-  return files$$1.map(file =>
-    mapFunc(file, external).then(results =>
-      getWatchers(file, results, output, target, options, handleError)
-    )
-  );
-}
-
-/**
- * Returns an array of objects { file(name), watcher }
- * @param {String[]} files files to watch
- * @param {String} output file name
- * @param {String} target path
- */
-function getWatchers(rootFile, files$$1, output, target, options, handleError) {
-  return files$$1.map(file => {
-    let timeOut; // fs.watch tends to run twice so we'll debounce it using a timeout
-
-    return {
-      file,
-      options,
-      watcher: chokidar.watch(file)
-      .on('raw', (event, path, details) => {
-        if (!timeOut) {
-          timeOut = setTimeout(() => {
-            logged(
-              `${colors.FgGreen}✓${colors.Reset} ${colors.Dim}Recompiled${
-                colors.Reset
-              } ` + `${colors.FgCyan}${output}${colors.Reset}`,
-              writeToFile
-                .bind(
-                  {},
-                  target,
-                  output,
-                  options || rootFile,
-                  getFileType(output),
-                  path
-                )
-                //.catch(handleError)
-            );
-            timeOut = null;
-          }, WATCH_TIMEOUT);
-        }
-      })
-    };
-  });
+  return JSON.parse(fs.readFileSync(mapFileName, 'utf-8')).ductTape || {};
 }
 
 /**
@@ -929,136 +863,105 @@ function getFileType(fileName) {
 }
 
 /**
- * Compile and writes a file to the file-system. if file type is `static` and source is missing, it will remove target file
- * @param {String} targetPath
- * @param {String} targetFileName
+ * Writes a file to the file-system. if file type is `static` and source is missing, it will remove target file
+ * @param {String} targetFile
  * @param {String} sourceFile
- * @param {Object} fileTypeDef containing `id` and a `handler` that has a `compile` function (unless `id`===`static)
- * @param {String} triggeredByFile a source file which was deleted (and should be removed from target folder)
+ * @param {Object} fileTypeDef containing `id` and a `handler` that has a `compile` function (unless `id`===`files')
  */
-function writeToFile(
-  targetPath,
-  targetFileName,
-  sourceFile,
-  fileTypeDef,
-  triggeredByFile
-) {
-  let absoluteTarget = getAbsolutePath(targetPath, targetFileName);
-
-  if (fileTypeDef.id === 'files') {
-    if (triggeredByFile !== undefined) {
-      removeFileIfRedundant(
-        triggeredByFile,
-        sourceFile,
-        `${targetPath}/${targetFileName}`
-      );
-    }
-
-    return files.copy(sourceFile, getAbsolutePath(targetPath, targetFileName));
-  } else {
-    return fileTypeDef.handler.compile(sourceFile).then(response => {
-      files.addPath(
-        absoluteTarget.substring(0, absoluteTarget.lastIndexOf('/'))
-      );
-      fs.writeFileSync(absoluteTarget, response.content);
-
-      return response;
-    });
+function writeToFile(targetFile, sourceFile, fileTypeDef) {
+  switch(fileTypeDef.id) {
+    case 'map': return new Promise(resolve => resolve());
+    case 'files': return files.copy(sourceFile, targetFile);
+    default: return compileToFile (targetFile, sourceFile, fileTypeDef);
   }
+}
+
+/**
+ * Compile and writes a file to the file-system. if file type is `static` and source is missing, it will remove target file
+ * @param {String} targetFile
+ * @param {String} sourceFile
+ * @param {Object} fileTypeDef containing `id` and a `handler` that has a `compile` function (unless `id`===`files')
+ */
+function compileToFile(targetFile, sourceFile, fileTypeDef) {
+  return fileTypeDef.handler.compile(sourceFile).then(response => {
+    files.addPath(
+      targetFile.substring(0, targetFile.lastIndexOf('/'))
+    );
+
+    fs.writeFileSync(targetFile, response.content);
+    return response;
+  });
 }
 
 /**
  * Removes a file if not found in source
- * @param {String} file
- * @param {String[]} entries
- * @param {String} destPath
+ * @param {String} targetFile
+ * @param {String} entry
+ * @param {String} sourceFile is the actual item which we've listened to
  */
-function removeFileIfRedundant(file, entries, destPath) {
-  if (
-    !entries.find(entry => {
-      if (entry === file) {
-        // if entry is the actual file
-        return fs.existsSync(entry);
-      } else if (entry.substring(entry.length - 1) === '/') {
-        // if entry is a folder containing the file
-        return fs.existsSync(`${entry}${file}`);
-      }
-
-      return false;
-    }) &&
-    fs.existsSync(`${destPath}${file}`)
-  ) {
-    fs.unlinkSync(`${destPath}${file}`);
+function getFileToRemove(targetFile, entry, sourceFile) {
+  if (entry === sourceFile) {
+    return targetFile;
   }
-}
 
-/**
- * return an array of source from app.map.json "entries" object
- * @param {Object} entry
- */
-function getMappedEntries(source, entry) {
-  let sources;
+  // targetFile is a folder and one of its sub-files was remove, so we need to remove it
+  entry = `${entry.replace(/\/$/,'')}/`; // verify entry ends with '/'
+  return `${targetFile}${sourceFile.replace(entry, '')}`;
+} 
 
-  if (entry instanceof Object) {
-    if (Array.isArray(entry)) {
-      sources = entry;
-    } else {
-      let entryCopy = Object.assign({}, entry);
-      entryCopy.source = getMappedEntries(source, entryCopy.source);
+class Builder {
+  constructor() {
+    this.handleError = defaultHandleError;
+    this.watchers = [];
+  }
 
-      return entryCopy;
+  /**
+   * Builds destination folder according to appMap description
+   * @param {Object} appMap OR filename
+   */
+  build(mapFile, handleError = defaultHandleError) {
+    const appMap = (typeof mapFile === 'string') ? readMapFile(mapFile) : mapFile;
+      
+    let source = appMap.source || '',
+        target = appMap.target || '';
+  
+    if (appMap.entries === undefined) {
+      handleError(new Errors.BadInput(mapFile, 'Missing `entries` property'));
     }
-  } else {
-    sources = [entry];
+  
+    return Promise.all(
+      Object.keys(appMap.entries).map(entry =>
+        writeToFile(
+          this._getAbsolutePath(target, entry),
+          this._getMappedEntries(source, appMap.entries[entry]),
+          getFileType(entry)
+        ).catch(handleError)
+      )
+    );
   }
 
-  return sources.map(file => getAbsolutePath(source, file));
-}
+  /**
+   * Creates watches to listen to sources files of appMap description
+   * @param {Object} appMap OR filename
+   */
+  watch(appMap, handleError = defaultHandleError) {
+    this.stopWatching();
+    this.appMap = appMap;
 
-/**
- * Builds destination folder according to appMap description
- * @param {Object} appMap OR filename
- */
-function once(appMap, handleError = defaultHandleError) {
-  if (typeof appMap === 'string') {
-    appMap = readMapFile(appMap);
-  }
+    if (typeof appMap === 'string') {
+      appMap = readMapFile(appMap);
+    }
+  
+    if (appMap.entries === undefined) {
+      handleError(new Errors.BadInput(mapFile, 'Missing `source` property'));
+    }
 
-  let source = appMap.source || '',
-      target = appMap.target || '';
-
-  if (appMap.entries === undefined) {
-    handleError(new Errors.BadInput(mapFile, 'Missing `source` property'));
-  }
-
-  return Promise.all(
-    Object.keys(appMap.entries).map(entry =>
-      writeToFile(
-        target,
-        entry,
-        getMappedEntries(source, appMap.entries[entry]),
-        getFileType(entry)
-      ).catch(handleError)
-    )
-  );
-}
-
-/**
- * Creates watches to listen to sources files of appMap description
- * @param {Object} appMap OR filename
- */
-function live(appMap, handleError = defaultHandleError) {
-  if (typeof appMap === 'string') {
-    appMap = readMapFile(appMap);
-  }
-
-  let target = appMap.target || '',
-    entries = getAbsolutePathes(appMap.source || '', appMap.entries);
-
-  return Promise.all(
-    Array.from(entries.keys())
+    let target = appMap.target || '',
+      entries = this._getAbsolutePathes(appMap.source || '', appMap.entries);
+    
+    return this.watchers = Array.from(entries.keys())
       .map(entry =>
-        getWatcherPromises(
+        this._getEntryWatchers(
           entry,
           entries.get(entry),
           getFileType(entry).handler.mapFile,
@@ -1066,23 +969,17 @@ function live(appMap, handleError = defaultHandleError) {
           handleError
         )
       )
-      .reduce((acc, promise) => acc.concat(promise), [])
-  ).then(watcheArrays =>
-    watcheArrays.reduce((acc, watches) => acc.concat(watches), [])
-  );
-}
-
-class Build {
-  constructor() {
-    this.handleError = defaultHandleError;
+      .reduce((acc, entry) => acc.concat(...entry), [])
   }
 
-  once(appMap) {
-    return once(appMap);
+  stopWatching() {
+    (this.watchers || []).forEach(watcher => watcher.watch.close());
   }
 
-  live(appMap) {
-    return live(appMap);
+  buildAndWatch(appMap, handleError = defaultHandleError) {
+    return this
+      .build(appMap, handleError)
+      .then(() => this.watch(appMap, handleError));
   }
 
   /** Sets a handler to call upon on error event
@@ -1097,21 +994,141 @@ class Build {
 
   getFacade() {
     return {
-      once: this.once.bind(this),
-      live: this.live.bind(this),
-      onError: this.onError.bind(this)
+      build: this.build.bind(this),
+      watch: this.watch.bind(this),
+      buildAndWatch: this.buildAndWatch.bind(this),
+      onError: this.onError.bind(this),
+      stopWatching: this.stopWatching.bind(this)
     };
   }
+
+ /**
+ * return an array of all the sources of a entry from app.map.json "entries" object
+ * @param {String} source - full path prefixes to be added to each source
+ * @param {Object} entry - can be either [fileNames], { source : [fileNames] }, or { source : fileName } or just a simple string
+ */
+  _getMappedEntries(sourcePath, entry) {
+    let sources;
+
+    if (entry instanceof Object) {
+      if (Array.isArray(entry)) {
+        sources = entry;
+      } else {
+        let entryCopy = Object.assign({}, entry);
+        entryCopy.source = this._getMappedEntries(sourcePath, entryCopy.source);
+  
+        return entryCopy;
+      }
+    } else {
+      sources = [entry];
+    }
+  
+    return sources.map(file => this._getAbsolutePath(sourcePath, file));
+  }
+
+  /**
+   * Returns a Map of fileName => absolute values
+   * @param {String} path
+   * @param {Strings[]} entries array of file name
+   */
+  _getAbsolutePathes(path, entries) {
+    let map = new Map();
+
+    Object.keys(entries).forEach(entry =>
+      map.set(entry, this._getMappedEntries(path, entries[entry]))
+    );
+
+    return map;
+  }
+
+  /**
+   * Returns an absolute path for a file
+   * @param {String} path
+   * @param {String} file
+   */
+  _getAbsolutePath(path, file) {
+    if (path.length > 0 && !path.match(/\/$/)) {
+      path += '/';
+    }
+
+    return `${process.cwd()}/${(path + file).replace('//', '/')}`;
+  }
+
+  /**
+ * Returns watchers for the entries
+ * @param {String} output fileName
+ * @param {Strings[]} files to watch
+ * @param {Function} mapFunc which parse the files to look for dependencies
+ * @param {String} target folder
+ */
+_getEntryWatchers(output, files$$1, mapFunc, target, handleError) {
+  let options, external;
+
+  if (files$$1.source) {
+    options = files$$1;
+    external = options.external;
+    files$$1 = files$$1.source;
+  }
+
+  return files$$1.map(entry =>
+    this._getWatchers(entry, mapFunc(entry, external), output, target, options, handleError)
+  );
 }
 
-let build = new Build().getFacade();
+/**
+ * Returns an array of objects { file(name), watcher }
+ * @param {String[]} files files to watch
+ * @param {String} output file name
+ * @param {String} target path
+ */
+_getWatchers(rootFile, files$$1, output, target, options = {}, handleError) {
+  const targetFile = this._getAbsolutePath(target, output);
 
-var builder = {
+  return files$$1.map(file => {
+    const fileTypeDef = getFileType(output),
+      handlers = [];
+      
+      switch(fileTypeDef.id) {
+        case 'files':
+          handlers.push((event, path) => {
+            switch(event) {
+              case 'unlink':
+                let fileToRemove = getFileToRemove(targetFile, rootFile, path);
+                return logged('Removed', fileToRemove.replace(process.cwd(), ''), fs.unlinkSync.bind(this, fileToRemove), handleError);
+              default:
+                return logged('Updated', targetFile.replace(process.cwd(), ''), writeToFile.bind(this, targetFile, rootFile, fileTypeDef), handleError);
+            }
+          });
+          break;
+        case 'map':
+          handlers.push((event, path) => {
+            return logged(`Map ${event}:`, path.replace(process.cwd(), ''), this.buildAndWatch.bind(this, this.appMap, handleError), handleError)
+          });
+          break;
+        default:
+          handlers.push(() => logged('Recompiled', output, compileToFile.bind({}, targetFile, rootFile, fileTypeDef), handleError));
+          break;
+      }
+    return {
+      type: fileTypeDef.id,
+      file,
+      options,
+      handlers,
+      watch: chokidar.watch(file, { ignoreInitial: true })
+        .on('all', (event, path) => handlers.forEach(handler => handler(event, path)))
+    }
+  });
+}
+}
+
+var builder = new Builder().getFacade();
+
+var ductTape = {
   css,
   html,
   js,
   files,
-  build
+  builder
 };
 
-module.exports = builder;
+module.exports = ductTape;

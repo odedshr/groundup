@@ -60,11 +60,11 @@ class CSS {
   }
 
   /**
-   * Returns a promise for a list of all files linked by `import` to the input file
+   * Returns a list of all files linked by `import` to the input file
    * @param {String} fileName
    */
   mapFile(fileName) {
-    return new Promise(resolve => resolve(mapper.map(fileName, importPattern)));
+    return mapper.map(fileName, importPattern);
   }
 
   /**

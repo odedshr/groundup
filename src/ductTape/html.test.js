@@ -1,18 +1,15 @@
 const assert = require('assert'),
-  html = require('../../.bin/builder.js').html;
+  html = require('../../.bin/ductTape.js').html;
 
-describe('builder.html', () => {
+describe('ductTape.html', () => {
   describe('html.mapFile', () => {
-    it('should get map file and its dependencies', done => {
-      html
-        .mapFile('./tests/resources/file2.html')
-        .then(output => {
-          assert.equal(
-            JSON.stringify(output),
-            '["./tests/resources/file2.html","./tests/resources/subfolder/file2.1.html"]'
-          );
-        })
-        .then(done);
+    it('should get map file and its dependencies', () => {
+      const map = html.mapFile('./tests/resources/file2.html');
+
+      assert.equal(
+        JSON.stringify(map),
+        '["./tests/resources/file2.html","./tests/resources/subfolder/file2.1.html"]'
+      );
     });
   });
 

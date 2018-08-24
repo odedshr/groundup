@@ -58,7 +58,7 @@ describe('html compiler', () => {
         { template: '<div>my template</div>' },
         {},
         {},
-        "{{.:'template'}}"
+        "{{{.:'template'}}}"
       );
       assert.equal(result, '<div>my template</div>');
     });
@@ -70,7 +70,7 @@ describe('html compiler', () => {
             { template: '<div>my template</div>' },
             {},
             {},
-            "{{.:'template2'}}"
+            "{{{.:'template2'}}}"
           ),
         Error
       );
@@ -96,6 +96,26 @@ describe('html compiler', () => {
         'Hello {{name}}'
       );
       assert.equal(result, 'Hello world');
+    });
+
+    it('should return an escaped variable', () => {
+      let result = html.compileToString(
+        {},
+        {},
+        { name: `<h1>escaped</h1>` },
+        'Hello {{name}}'
+      );
+      assert.equal(result, 'Hello &lt;h1>escaped&lt;/h1>');
+    });
+
+    it('should return a safe unescaped variable', () => {
+      let result = html.compileToString(
+        {},
+        {},
+        { name: '<h1>safe</h1>' },
+        'Hello {{{name}}}'
+      );
+      assert.equal(result, 'Hello <h1>safe</h1>');
     });
 
     it('should iterate a list of items', () => {

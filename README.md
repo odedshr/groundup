@@ -8,7 +8,7 @@
 
 GroundUp are a set of tools I found myself using over and over so I figured I might create them in a generic package 
 I can simply reuse. For now, this project contains libraries for 3 scenarios:
-1. Compilation tools (builder)
+1. Compilation tools (ductTape)
 2. Backend tools (HTMLCompiler)
 3. Frontend, aka browser, tools (HTMLCompiler + DOMinion)
 
@@ -20,40 +20,45 @@ Install with npm:
 
 ## Usage
 
-### Building
+### ductTape-cli
+ductTape is a packaging tool that can handle JS, HTML, css and static files; merge/transpile/copy to target folder
 Run with node:
 ```
-node ./node_modules/groundup/dist/builder-cli.js [applicationMap] [--live [--build-now]]
+node ./node_modules/groundup/dist/ductTape-cli.js [applicationMap] [--watch [--build-now]]
 ```
-If no parameters given, builder will look for the `applicationMap` in the `package.json`, build target files once and quit.
+If no parameters given, ductTape will look for an `app.map.json` and if not found, it will use the `ductTape` property
+from the `package.json`; build target files once and quit.
 ```
-node ./node_modules/groundup/dist/builder-cli.js app.map1.json app.map2.json
+node ./node_modules/groundup/dist/ductTape-cli.js app.map1.json app.map2.json
 ```
 with the following two exception, other arguments will be treated as paths to applications-maps (each handled seperately)
 
-- `--live` (optional) would keep the builder running and watching for changes in source files
+- `--watch` (optional) would keep the builder running and watching for changes in source files
 
-- `--build-now` (optional, relevant only in `--live` mode) will build the target files and start watching source files
+- `--build-now` (optional, relevant only in `--watch` mode) will build the target files and start watching source files
 ```
-node ./node_modules/groundup/dist/builder-cli.js app.map.json --live --build-now
+node ./node_modules/groundup/dist/ductTape-cli.js app.map.json --watch --build-now
 ```
 
 #### The application map
 The application map is the set of instructions for the builder:
 ```
 {
-  "source": "src/",
-  "target": "dist/",
-  "entries": {
-    "index.html": "file1.html",
-    "main.js": {
-      "source": ["file1.js", "tools.js"],
-      "format": "es",
-      "external": "vue.js"
-    },
-    "main.css": ["file1.less", "file2.less"],
-    "webWorker.js": ["web-worker.js", "tools.js"],
-    "static/": ["subfolder/"]
+  "ductTape": {
+    "source": "src/",
+    "target": "dist/",
+    "entries": {
+      "*": "../package.json"
+      "index.html": "file1.html",
+      "main.js": {
+        "source": ["file1.js", "tools.js"],
+        "format": "es",
+        "external": "vue.js"
+      },
+      "main.css": ["file1.less", "file2.less"],
+      "webWorker.js": ["web-worker.js", "tools.js"],
+      "static/": ["subfolder/"]
+    }
   }
 }
 ```
@@ -62,13 +67,16 @@ The application map is the set of instructions for the builder:
 - `entries` is a map of target files (html, css, js or files and folders that should be copied as-is) and sources
   - entry can be a simple string ("file1.html"), an array of strings ("["file1.js", "tools.js"]"); or an object with 
     `format` (amd, cjs, es, iife, umd), `external` (array of files that will not be bundled) and source (string or array of strings as before)
+  - entry name "*" means that whenever the source file changes, buildAndWatch() will initiate automatically, as the map has changed
+  - `external` (which are not bundled as they're a part of `node_modules`) are also automatically read from the current folder's `package.json`
+- The `package.json` is a valid file to place the `ductTape` property and maintain all the application infromation in a single file
 
-## Builder
+## ductTape
 ```
-import { builder } from 'groundup'
+import { ductTape } from 'groundup'
 ```
 
-### builder.css
+### ductTape.css
 - minify(css) => minifiedCssString
 - render(lessString) => cssString
 Vendor specific prefixes (`-ms`, `-moz` and `-webkit`) will be automatically added in
@@ -80,7 +88,7 @@ Files are linked using the `@import` command
 - loadFile(fileName) => fileContentWithImportsReplacdToActualFile
 - compile(fileName) => { content: minify(render(loadFile(fileName)), files: [ linkedFilesArray ] }
 
-### builder.html
+### ductTape.html
 
 - minify(html) => minifiedHtmlString
 - mapFile(fileName) => [ linkedFilesArray ]
@@ -88,7 +96,7 @@ Files are linked using the `<link rel="import" href="filename.html" data-replace
 - loadFile(fileName) => fileContentWithImportsReplacdToActualFile
 - compile(fileName) => { content: minify(loadFile(fileName)), files: [ linkedFilesArray ] }
 
-### builder.js
+### ductTape.js
 - minify(js) => minifiedJsString
 - trasnpile(es6Code) => es2015Code
 - mapFile(fileName) => [ linkedFilesArray ]
@@ -96,7 +104,7 @@ Files are linked using the `require('filename.js')` command
 - loadFile(fileName) => fileContentWithImportsReplacdToActualFile
 - compile(fileName) => { content: minify(transpile(loadFile(fileName)), files: [ linkedFilesArray ] }
 
-### builder.files
+### ductTape.files
 - copy(source, target)
 - mapFile(pattern) => [ filesMatchingPatternArray ]
 - addPath(path)
@@ -104,10 +112,10 @@ create the path (recursively)
 - removePath(folder)
 Removes folder (with content)
 
-### builder.builder
-The Build module process a fileMap and create each entry based on its inputs.
-- once(fileMap) => Promise that fileMap was processed
-- live(fileMap) => [ WatchesArray ]
+### ductTape.builder
+The builder module process a fileMap and create each entry based on its inputs.
+- build(fileMap) => Promise that fileMap was processed
+- watch(fileMap) => [ WatchesArray ]
 
 ## HTMLCompiler
 ```
@@ -117,7 +125,11 @@ import { HtmlCompiler } from 'groundup'
 HTMLCompiler is a rather simple template-engine, taking after [handlebar](https://handlebarsjs.com/)  with a few tweaks of my own
 
 ### Simple example: Hello World!
-Rendering the template _```Hello {{name}}```_ with the data ```{ name:'World' }``` will result the string '```Hello World```'.
+Rendering the template _`Hello {{name}}`_ with the data `{ name:'World' }` will result the string '`Hello World`'.
+by default `{{string}}` cannot contain HTML, as it will "escape" the HTML to protect from any malicious code. If out data was `{ name: '<b>World</b>' }` it would have rendered to `Hello &gt;b>World&gt;b>`.
+
+### Rendering HTML
+If you do however want to render HTML (when the data doesn't contain untrusted user input), you can use triple curly braces - `Hello {{{safeName}}}`. with the data `{ safeName: '<b>World</b>' }` it would render to `Hello <b>World</b>`.
 
 ## When data is an object
 Data may contain an object, for example:
@@ -182,7 +194,6 @@ If your template contains the string '```{{```' (or '```}}```') you might want t
 ```
 {{'<?','?>'}}Hello <?name?>{{/'<?','?>'}}
 ```
-
 
 ### Translation
 It is advised that strings shouldn't be hard-coded in your structure, rather than use variables that can be translates. This can easily be done using '```#string.code```', for example:

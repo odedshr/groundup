@@ -18,24 +18,38 @@ const copyFile =
   ((file, fileTarget) => writeFileSync(fileTarget, readFileSync(file)));
 
 /**
- * Return the file's target path by merging by replacing the sourcePath with targetPath
+ * @returns the file's target path by merging by replacing the sourcePath with targetPath
  * If source path contains /** /*.*' it is ignored
  * @param {String} file
  * @param {String} sourcePath
  * @param {String} targetPath
  */
 function getFileTargt(file, sourcePath, targetPath) {
+  sourcePath = sourcePath.replace('/**/*.*', '');
+  file = file.replace(sourcePath, '');
+  
+  // copying a folder
   if (file === sourcePath) {
-    return targetPath + file.substr(file.lastIndexOf('/'));
+    return targetPath + file.substr(file.lastIndexOf('/') + 1);
   }
 
+  // copy a file to a new folder
   if (targetPath.match(/\/$/)) {
     return (
-      targetPath + file.replace(sourcePath.replace('/**/*.*', '') + '/', '')
+      targetPath + file.replace(sourcePath.replace('/**/*.*', ''), '')
     );
   }
-
+  
+  // copy to file target as is
   return targetPath;
+}
+
+/**
+ * @returns the the file's path, if item is a folder, return it as it is
+ * @param {*} path 
+ */
+function getFileFolder(path) {
+  return lstatSync(path.replace('/**/*.*','')).isDirectory() ? path : path.substr(0, path.lastIndexOf('/'));
 }
 
 export default {
@@ -46,11 +60,11 @@ export default {
    */
   copy(source, target) {
     const handleFile = (task, file) => {
-      let fileTarget = getFileTargt(file, task.source, task.target);
+      let fileTarget = getFileTargt(file, getFileFolder(task.source), task.target);
 
       if (lstatSync(file).isDirectory()) {
         this.addPath(fileTarget);
-        sources.push({ source: `${file}/**/*.*`, target: fileTarget + '/' });
+        sources.push({ source: `${file}/**/*.*`, target: fileTarget.replace(/\/$/,'') + '/' });
       } else {
         promises.push(
           new Promise((resolve, reject) => {
@@ -62,7 +76,7 @@ export default {
               );
               reject(err);
             } else {
-              resolve();
+              resolve(fileTarget);
             }
           })
         );
@@ -85,11 +99,11 @@ export default {
   },
 
   /**
-   * Returns a promise for a list of all files matching the fileName pattern
+   * Returns a list of all files matching the fileName pattern
    * @param {String} fileName
    */
   mapFile(fileName) {
-    return new Promise(resolve => resolve(glob.sync(fileName, {})));
+    return glob.sync(fileName, {});
   },
 
   /**
