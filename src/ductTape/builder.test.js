@@ -123,7 +123,7 @@ describe('ductTape', () => {
       builder.stopWatching();
     });
 
-    it('should update static after an update', done => {
+    xit('should update static after an update', done => {
       const fileContent = new Date().getTime();
 
       builder.build(staticAppMap)
@@ -142,7 +142,7 @@ describe('ductTape', () => {
         .catch(err => err);
     }).timeout(5000);
 
-    it('should update static after file remove', done => {
+    xit('should update static after file remove', done => {
       const fileContent = new Date().getTime();
 
       builder.build(staticAppMap)
@@ -193,7 +193,7 @@ describe('ductTape', () => {
         .catch(err => err)
     }).timeout(8000);
 
-    it('should update build when js file udpates', done => {
+    xit('should update build when js file udpates', done => {
       const appMap = JSON.parse(
           fs.readFileSync(appMapFile, 'utf-8')
         ).ductTape,
@@ -228,7 +228,7 @@ describe('ductTape', () => {
         .catch(err => err)
     }).timeout(10000);
 
-    it('should watch the map.file', done => {
+    xit('should watch the map.file', done => {
       const dynamicMapFile = './tests/resources/dynamic.map.json',
         ductTape = JSON.parse(
           fs.readFileSync(dynamicMapFile, 'utf-8')
