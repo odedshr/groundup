@@ -1124,17 +1124,18 @@ _getWatchers(rootFile, files$$1, output, target, options = {}, handleError) {
 var builder = new Builder().getFacade();
 
 function getMapFiles() {
-  const maps = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
-  if (maps.length === 0 && fs__default.existsSync('./package.json')) {
-    let appMap = JSON.parse(fs__default.readFileSync('./package.json')).applicationMap;
+  const maps = process.argv.slice(2).filter(arg => !arg.startsWith('--')),
+    packageFileName = './package.json',
+    defaultFileName = './app.map.json';
 
-    if (appMap !== undefined) {
-      maps.push(appMap);
-    }
+  if (maps.length === 0 && fs__default.existsSync(defaultFileName)) {
+    maps.push(defaultFileName);
   }
-  if (maps.length === 0 && fs__default.existsSync('./app.map.json')) {
-    maps.push('./app.map.json');
+
+  if (maps.length === 0 && fs__default.existsSync(defaultFileName)) {
+    maps.push(packageFileName);
   }
+
   return maps;
 }
 

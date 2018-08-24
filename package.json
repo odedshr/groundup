@@ -67,7 +67,7 @@
   },
   "scripts": {
     "build": "node ./src/builder-facade/Builder.js ./src/app.map.json",
-    "prepublish": "node ./scripts/compile-groundup.js",
+    "prepare": "node ./scripts/prepare-groundup.js",
     "test": "./node_modules/mocha/bin/mocha src/**/*.test.js --exit"
   },
   "prettier": {
