@@ -4,15 +4,24 @@ import babel from 'babel-core';
 import UglifyJS from 'uglify-js';
 import mapper from './mapper.js';
 import Errors from '../etc/Errors.js';
+import colors from '../etc/console-colors.js';
 
 const importPattern = `import.*(["\\'])(.*\\.js)\\1`,
   defaultFormat = 'cjs';
 
+function getLogLabel(verb, subject) {
+  const time = new Date(),
+    padTwoDigits = num => ('00' + num).slice(-2);
+
+  return `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:` +
+    `${padTwoDigits(time.getSeconds())} ${colors.FgRed}✖${colors.Reset} ` +
+    `${colors.Dim}${verb}${colors.Reset} ${colors.FgCyan}${subject}${colors.Reset}`;
+}
+
 class JS {
   constructor() {
-    this.handleError = error => {
-      console.log(error);
-    };
+    this.handleError = error =>
+      console.error(getLogLabel('ductTape.js: An error has occoured', `(${error.message}):`), error.toString());
   }
 
   /**
@@ -56,10 +65,16 @@ class JS {
             .then(this.minify)
             .then(transpiledAndUglified => {
               fileSet.content = transpiledAndUglified;
+
               return fileSet;
             })
             .catch(err => {
-              console.error('build.js.transpile: ', err);
+              if (err.codeFrame) {
+                this.handleError(new Errors.BadInput(JSON.stringify(filenames), err.codeFrame, err));
+              } else {
+                this.handleError(new Errors.Custom('ductTape.js.transpile', JSON.stringify(filenames), err));
+              }
+
               return fileSet;
             });
         }
@@ -72,7 +87,7 @@ class JS {
    */
   getExternalsFromPackageJson() {
     if (fs.existsSync('./package.json')) {
-      const packageJson = JSON.parse(fs.readFileSync('./package.json','utf-8'));
+      const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 
       return [...Object.keys(packageJson.dependencies  || {}), ...Object.keys(packageJson.devDependencies || {})];
     }
@@ -83,7 +98,7 @@ class JS {
   getArray(item) {
     return Array.isArray(item)  ? [...item] : [item];
   }
-  
+
   /**
    * Returns a promise for a minified js code, if bad code is provided it would reject with a syntax error
    * @param {String} jsCode code
@@ -129,6 +144,7 @@ class JS {
         (memo, item) => {
           memo.files = memo.files.concat(item.files);
           memo.content += item.content;
+
           return memo;
         },
         { files: [], content: '' }
@@ -149,11 +165,8 @@ class JS {
         files: result.modules,
         content: result.code
       }))
-      .then(res => {
-        return res;
-      })
       .catch(err => {
-        this.handleError(new Errors.Custom('loadFile',input, err));
+        this.handleError(wrapRollUpError({ input, external }, err));
         return { files: [], content: '' };
       });
   }
@@ -164,6 +177,21 @@ class JS {
   onError(handler) {
     this.handleError = handler;
     mapper.onError(handler);
+  }
+}
+
+function wrapRollUpError(input, error) {
+  switch (error.code) {
+    case 'PARSE_ERROR':
+      return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.toString());
+    case 'MISSING_EXPORT':
+      return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.message);
+    case 'UNRESOLVED_ENTRY':
+      return new Errors.NotFound('compile-source', input.input);
+    default:
+      console.trace(error);
+
+      return new Errors.Custom('ductTape.js.loadFile', input, error);
   }
 }
 

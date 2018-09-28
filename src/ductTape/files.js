@@ -27,7 +27,7 @@ const copyFile =
 function getFileTargt(file, sourcePath, targetPath) {
   sourcePath = sourcePath.replace('/**/*.*', '');
   file = file.replace(sourcePath, '');
-  
+
   // copying a folder
   if (file === sourcePath) {
     return targetPath + file.substr(file.lastIndexOf('/') + 1);
@@ -39,17 +39,16 @@ function getFileTargt(file, sourcePath, targetPath) {
       targetPath + file.replace(sourcePath.replace('/**/*.*', ''), '')
     );
   }
-  
   // copy to file target as is
   return targetPath;
 }
 
 /**
  * @returns the the file's path, if item is a folder, return it as it is
- * @param {*} path 
+ * @param {*} path
  */
 function getFileFolder(path) {
-  return lstatSync(path.replace('/**/*.*','')).isDirectory() ? path : path.substr(0, path.lastIndexOf('/'));
+  return lstatSync(path.replace('/**/*.*', '')).isDirectory() ? path : path.substr(0, path.lastIndexOf('/'));
 }
 
 export default {
@@ -64,12 +63,13 @@ export default {
 
       if (lstatSync(file).isDirectory()) {
         this.addPath(fileTarget);
-        sources.push({ source: `${file}/**/*.*`, target: fileTarget.replace(/\/$/,'') + '/' });
+        sources.push({ source: `${file}/**/*.*`, target: fileTarget.replace(/\/$/, '') + '/' });
       } else {
         promises.push(
           new Promise((resolve, reject) => {
             this.addFilePath(fileTarget);
             let err = copyFile(file, fileTarget);
+
             if (err) {
               console.error(
                 `GroundUp:copyFile failed: ${file} => ${fileTarget}`
@@ -92,6 +92,7 @@ export default {
 
     while (sources.length) {
       let task = sources.pop();
+
       glob.sync(task.source, {}).forEach(handleFile.bind({}, task));
     }
 
@@ -118,6 +119,7 @@ export default {
       if (acc.length && !existsSync(acc)) {
         mkdirSync(acc);
       }
+
       return acc + '/';
     }, '');
   },
@@ -138,6 +140,7 @@ export default {
         if (acc.length && !existsSync(acc)) {
           mkdirSync(acc);
         }
+
         return acc + '/';
       }, '');
   },

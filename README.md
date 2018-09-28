@@ -265,3 +265,32 @@ DOMinion.bind(
 ```
 This will provide the `div` its onclick behaviour.
 node elements that have already been binded will get an attribute `data-js-binded="true"` and will not be rebinded, unless `forceBind === true`.
+
+## Errors
+Errors provides a list of descriptive Error object. their goal is to contain the
+information required to understand the problem that caused the error.
+- AlreadyExists (varType, value) => error code 409
+- BadInput (key, value) => error code 406
+- Custom (action, description, error) => error code 500
+- Expired (varName) => error code 406
+- Immutable (Immutable) => error code 406
+- MissingInput (varName) => error code 406
+- NotFound (type, id) => error code 404
+- NoPermissions (actionName) => error code 401
+- SaveFailed (varName, content, error) => error code 500
+- System (error, args, url) => error code 500
+- TooLong (varName, value, max = '?') => error code 406
+- TooShort (varName, value, min = '?') => error code 406
+- Unauthorized () => error code 401
+
+## Colors
+Colors provides console-codes to change the current texts colors
+It contains the codes for FgXXX (text-colors) and BgXXX (background-color) for 
+following colors:  black, red, green, yellow, blue, magenta, cyan and white;
+Addtionally it contains codes for reset, bright, dim, underscore blink, reverse
+and hidden.
+And lastly, it contains an array of sets of matching FgColors and BgColors that
+can be. For exmaple the first set is `['Black', 'White']`
+applied together. The function `getSet(i)` will return a sequential set. This
+allows mapping IDs into colors sets (so for example, all items related to `id=3` will
+have the same color).

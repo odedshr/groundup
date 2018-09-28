@@ -8,11 +8,12 @@ import html from './html.js';
 import js from './js.js';
 import files from './files.js';
 
-const defaultHandleError = error => console.error(error),
+const defaultHandleError = error => console.error(getLogLabel('An error has occoured', `(${error.message})`, 'error'), error),
   mapHandler = {
     mapFile(file) {
       return [file];
     },
+
     compile(file) {
       throw Errors.BadInput('mapFile', file);
     }
@@ -26,24 +27,36 @@ const defaultHandleError = error => console.error(error),
     ['files', { regExp: /\/$/, id: 'files', handler: files }]
   ]);
 
+function getLogIcon (type='info') {
+  switch (type) {
+    case 'error': return `${colors.FgRed}✖${colors.Reset}`;
+    default: return `${colors.FgGreen}✓${colors.Reset}`;
+  }
+}
+function getLogLabel(verb, subject, type) {
+  const time = new Date();
+
+  return `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:` +
+    `${padTwoDigits(time.getSeconds())} ${getLogIcon(type)} ` +
+    `${colors.Dim}${verb}${colors.Reset} ${colors.FgCyan}${subject}${colors.Reset}`;
+}
 /**
  * Runs `method()` and conole.time the time it took, along with `label`
  * @param {String} label
  * @param {Function} method
  */
 function logged(verb, subject, method, handleError) {
-  const time = new Date(),
-    label = `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:` +
-    `${padTwoDigits(time.getSeconds())} ${colors.FgGreen}✓${colors.Reset} ` +
-    `${colors.Dim}${verb}${colors.Reset} ${colors.FgCyan}${subject}${colors.Reset}`;
-  
+  const label = getLogLabel(verb, subject);
+
   console.time(label);
+
   try {
     method();
   }
   catch (err) {
     handleError(err);
   }
+
   console.timeEnd(label);
 }
 
@@ -83,15 +96,16 @@ function getFileType(fileName) {
  * @param {Object} fileTypeDef containing `id` and a `handler` that has a `compile` function (unless `id`===`files')
  */
 function writeToFile(targetFile, sourceFile, fileTypeDef) {
-  switch(fileTypeDef.id) {
+  switch (fileTypeDef.id) {
     case 'map': return new Promise(resolve => resolve());
     case 'files': return files.copy(sourceFile, targetFile);
-    default: return compileToFile (targetFile, sourceFile, fileTypeDef);
+    default: return compileToFile(targetFile, sourceFile, fileTypeDef);
   }
 }
 
 /**
- * Compile and writes a file to the file-system. if file type is `static` and source is missing, it will remove target file
+ * Compile and writes a file to the file-system. if file type is `static` and source is missing, it will remove target
+ * file
  * @param {String} targetFile
  * @param {String} sourceFile
  * @param {Object} fileTypeDef containing `id` and a `handler` that has a `compile` function (unless `id`===`files')
@@ -103,6 +117,7 @@ function compileToFile(targetFile, sourceFile, fileTypeDef) {
     );
 
     writeFileSync(targetFile, response.content);
+
     return response;
   });
 }
@@ -119,9 +134,10 @@ function getFileToRemove(targetFile, entry, sourceFile) {
   }
 
   // targetFile is a folder and one of its sub-files was remove, so we need to remove it
-  entry = `${entry.replace(/\/$/,'')}/`; // verify entry ends with '/'
+  entry = `${entry.replace(/\/$/, '')}/`; // verify entry ends with '/'
+
   return `${targetFile}${sourceFile.replace(entry, '')}`;
-} 
+}
 
 class Builder {
   constructor() {
@@ -135,14 +151,14 @@ class Builder {
    */
   build(mapFile, handleError = defaultHandleError) {
     const appMap = (typeof mapFile === 'string') ? readMapFile(mapFile) : mapFile;
-      
+
     let source = appMap.source || '',
         target = appMap.target || '';
-  
+
     if (appMap.entries === undefined) {
       handleError(new Errors.BadInput(mapFile, 'Missing `entries` property'));
     }
-  
+
     return Promise.all(
       Object.keys(appMap.entries).map(entry =>
         writeToFile(
@@ -165,14 +181,14 @@ class Builder {
     if (typeof appMap === 'string') {
       appMap = readMapFile(appMap);
     }
-  
+
     if (appMap.entries === undefined) {
       handleError(new Errors.BadInput(mapFile, 'Missing `source` property'));
     }
 
     let target = appMap.target || '',
       entries = this._getAbsolutePathes(appMap.source || '', appMap.entries);
-    
+
     return this.watchers = Array.from(entries.keys())
       .map(entry =>
         this._getEntryWatchers(
@@ -183,7 +199,7 @@ class Builder {
           handleError
         )
       )
-      .reduce((acc, entry) => acc.concat(...entry), [])
+      .reduce((acc, entry) => acc.concat(...entry), []);
   }
 
   stopWatching() {
@@ -216,11 +232,12 @@ class Builder {
     };
   }
 
- /**
- * return an array of all the sources of a entry from app.map.json "entries" object
- * @param {String} source - full path prefixes to be added to each source
- * @param {Object} entry - can be either [fileNames], { source : [fileNames] }, or { source : fileName } or just a simple string
- */
+  /**
+   * return an array of all the sources of a entry from app.map.json "entries" object
+   * @param {String} source - full path prefixes to be added to each source
+   * @param {Object} entry - can be either [fileNames], { source : [fileNames] }, or { source : fileName } or just a
+   * simple string
+   */
   _getMappedEntries(sourcePath, entry) {
     let sources;
 
@@ -229,14 +246,15 @@ class Builder {
         sources = entry;
       } else {
         let entryCopy = Object.assign({}, entry);
+
         entryCopy.source = this._getMappedEntries(sourcePath, entryCopy.source);
-  
+
         return entryCopy;
       }
     } else {
       sources = [entry];
     }
-  
+
     return sources.map(file => this._getAbsolutePath(sourcePath, file));
   }
 
@@ -275,64 +293,83 @@ class Builder {
  * @param {Function} mapFunc which parse the files to look for dependencies
  * @param {String} target folder
  */
-_getEntryWatchers(output, files, mapFunc, target, handleError) {
-  let options, external;
+  _getEntryWatchers(output, files, mapFunc, target, handleError) {
+    let options, external;
 
-  if (files.source) {
-    options = files;
-    external = options.external;
-    files = files.source;
+    if (files.source) {
+      options = files;
+      external = options.external;
+      files = files.source;
+    }
+
+    return files.map(entry =>
+      this._getWatchers(entry, mapFunc(entry, external), output, target, options, handleError)
+    );
   }
 
-  return files.map(entry =>
-    this._getWatchers(entry, mapFunc(entry, external), output, target, options, handleError)
-  );
-}
+  /**
+   * Returns an array of objects { file(name), watcher }
+   * @param {String[]} files files to watch
+   * @param {String} output file name
+   * @param {String} target path
+   */
+  _getWatchers(rootFile, files, output, target, options = {}, handleError) {
+    const targetFile = this._getAbsolutePath(target, output);
 
-/**
- * Returns an array of objects { file(name), watcher }
- * @param {String[]} files files to watch
- * @param {String} output file name
- * @param {String} target path
- */
-_getWatchers(rootFile, files, output, target, options = {}, handleError) {
-  const targetFile = this._getAbsolutePath(target, output);
+    return files.map(file => {
+      const fileTypeDef = getFileType(output),
+        handlers = [];
 
-  return files.map(file => {
-    const fileTypeDef = getFileType(output),
-      handlers = [];
-      
-      switch(fileTypeDef.id) {
+      switch (fileTypeDef.id) {
         case 'files':
           handlers.push((event, path) => {
-            switch(event) {
+            switch (event) {
               case 'unlink':
                 let fileToRemove = getFileToRemove(targetFile, rootFile, path);
-                return logged('Removed', fileToRemove.replace(process.cwd(), ''), unlinkSync.bind(this, fileToRemove), handleError);
+
+                return logged(
+                  'Removed',
+                  fileToRemove.replace(process.cwd(), ''),
+                  unlinkSync.bind(this, fileToRemove),
+                  handleError);
+
               default:
-                return logged('Updated', targetFile.replace(process.cwd(), ''), writeToFile.bind(this, targetFile, rootFile, fileTypeDef), handleError);
+                return logged(
+                  'Updated',
+                  targetFile.replace(process.cwd(), ''),
+                  writeToFile.bind(this, targetFile, rootFile, fileTypeDef),
+                  handleError);
             }
           });
           break;
         case 'map':
-          handlers.push((event, path) => {
-            return logged(`Map ${event}:`, path.replace(process.cwd(), ''), this.buildAndWatch.bind(this, this.appMap, handleError), handleError)
-          });
+          handlers.push((event, path) => logged(
+            `Map ${event}:`,
+            path.replace(process.cwd(), ''),
+            this.buildAndWatch.bind(this, this.appMap, handleError),
+            handleError
+          ));
           break;
         default:
-          handlers.push(() => logged('Recompiled', output, compileToFile.bind({}, targetFile, rootFile, fileTypeDef), handleError));
+          handlers.push((event, path) => logged(
+            `${event} ${path.replace(process.cwd(), '')}: Recompiled`,
+            output,
+            compileToFile.bind({}, targetFile, Object.assign({}, options, { source: rootFile }), fileTypeDef),
+            handleError
+          ));
           break;
       }
-    return {
-      type: fileTypeDef.id,
-      file,
-      options,
-      handlers,
-      watch: watch(file, { ignoreInitial: true })
-        .on('all', (event, path) => handlers.forEach(handler => handler(event, path)))
-    }
-  });
-}
+
+      return {
+        type: fileTypeDef.id,
+        file,
+        options,
+        handlers,
+        watch: watch(file, { ignoreInitial: true })
+          .on('all', (event, path) => handlers.forEach(handler => handler(event, path)))
+      };
+    });
+  }
 }
 
 export default new Builder().getFacade();

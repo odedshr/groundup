@@ -8,6 +8,31 @@ class DetailedError extends Error {
     this.status = status;
     this.details = details;
   }
+
+  getStackTrace() { 
+    let messages = this.toString() || this.message,
+        ptr = this;
+
+    if (this.stack) {
+      if (typeof this.stack.replace === 'function') {
+        messages = '\n' + JSON.stringify(this.stack.replace(/^[^\(]+?[\n$]/gm, '')
+          .replace(/^\s+at\s+/gm, '')
+          .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
+          .split('\n'), null, 4);
+      } else {
+        while (ptr.stack) {
+          messages += `\n${ptr.stack.toString() || ptr.stack.message}`;
+          ptr = ptr.stack;
+        }
+      }
+    }
+
+    return messages;
+  }
+
+  getString() {
+    return this.message;
+  }
 }
 
 class AlreadyExists extends DetailedError {
@@ -20,6 +45,10 @@ class BadInput extends DetailedError {
   constructor(key, value) {
     super('bad-input', 406, { key: key, value: value });
   }
+
+  toString() {
+    return `Bad Input for ${this.details.key} (${this.details.value})`;
+  }
 }
 
 class Custom extends DetailedError {
@@ -28,7 +57,7 @@ class Custom extends DetailedError {
   }
 
   toString() {
-    return `Error when trying ${this.details.key} ${this.details.value} (${this.stack.toString()})`;
+    return `${this.details.key} ${this.details.value}`;
   }
 }
 class Expired extends DetailedError {
@@ -46,6 +75,10 @@ class Immutable extends DetailedError {
 class MissingInput extends DetailedError {
   constructor(varName) {
     super('missing-input', 406, { key: varName });
+  }
+
+  toString() {
+    return `Missing Input: ${this.details.key}`;
   }
 }
 
@@ -780,20 +813,26 @@ var colors = {
   BgWhite: '\x1b[47m',
 
   sets: [
-    ['bgBlack', 'white'],
-    ['bgBlack', 'red'],
-    ['bgBlack', 'green'],
-    ['black', 'blue'],
-    ['bgBlack', 'yellow'],
-    ['bgBlack', 'magenta'],
-    ['bgBlack', 'cyan'],
-    ['bgWhite', 'red'],
-    ['bgWhite', 'green'],
-    ['bgWhite', 'blue'],
-    ['bgWhite', 'magenta'],
-    ['bgWhite', 'cyan'],
-    ['bgWhite', 'black']
+    ['Black', 'White'],
+    ['Black', 'Red'],
+    ['Black', 'Green'],
+    ['Black', 'Blue'],
+    ['Black', 'Yellow'],
+    ['Black', 'Magenta'],
+    ['Black', 'Cyan'],
+    ['White', 'Red'],
+    ['White', 'Green'],
+    ['White', 'Blue'],
+    ['White', 'Magenta'],
+    ['White', 'Cyan'],
+    ['White', 'Black']
   ],
+
+  getSet(i) {
+    const [bg, fg] = this.sets[i % this.sets.length];
+
+    return this[`Bg${bg}`] + this[`Fg${fg}`];
+  }
 };
 
 var index = { colors, Errors, HtmlCompiler: HTMLCompiler, DOMinion };

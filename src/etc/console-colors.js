@@ -26,18 +26,24 @@ export default {
   BgWhite: '\x1b[47m',
 
   sets: [
-    ['bgBlack', 'white'],
-    ['bgBlack', 'red'],
-    ['bgBlack', 'green'],
-    ['black', 'blue'],
-    ['bgBlack', 'yellow'],
-    ['bgBlack', 'magenta'],
-    ['bgBlack', 'cyan'],
-    ['bgWhite', 'red'],
-    ['bgWhite', 'green'],
-    ['bgWhite', 'blue'],
-    ['bgWhite', 'magenta'],
-    ['bgWhite', 'cyan'],
-    ['bgWhite', 'black']
+    ['Black', 'White'],
+    ['Black', 'Red'],
+    ['Black', 'Green'],
+    ['Black', 'Blue'],
+    ['Black', 'Yellow'],
+    ['Black', 'Magenta'],
+    ['Black', 'Cyan'],
+    ['White', 'Red'],
+    ['White', 'Green'],
+    ['White', 'Blue'],
+    ['White', 'Magenta'],
+    ['White', 'Cyan'],
+    ['White', 'Black']
   ],
+
+  getSet(i) {
+    const [bg, fg] = this.sets[i % this.sets.length];
+
+    return this[`Bg${bg}`] + this[`Fg${fg}`];
+  }
 };
