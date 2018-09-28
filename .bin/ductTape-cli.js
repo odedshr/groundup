@@ -220,6 +220,20 @@ var colors = {
   }
 };
 
+// code from https://codeburst.io/throttling-and-debouncing-in-javascript-b01cad5c8edf
+
+var debounce = (func, delay) => {
+  let inDebounce;
+
+  return function() {
+    const context = this,
+      args = arguments;
+
+    clearTimeout(inDebounce);
+    inDebounce = setTimeout(() => func.apply(context, args), delay);
+  }
+}
+
 class Mapper {
   constructor() {
     this.handleError = error => {
@@ -863,7 +877,8 @@ var files = {
   }
 };
 
-const defaultHandleError = error => console.error(getLogLabel$1('An error has occoured', `(${error.message})`, 'error'), error),
+const debounceDelay = 100,
+  defaultHandleError = error => console.error(getLogLabel$1('An error has occoured', `(${error.message})`, 'error'), error),
   mapHandler = {
     mapFile(file) {
       return [file];
@@ -1182,36 +1197,36 @@ class Builder {
               case 'unlink':
                 let fileToRemove = getFileToRemove(targetFile, rootFile, path);
 
-                return logged(
+                return debounce(logged(
                   'Removed',
                   fileToRemove.replace(process.cwd(), ''),
                   fs.unlinkSync.bind(this, fileToRemove),
-                  handleError);
+                  handleError), debounceDelay);
 
               default:
-                return logged(
+                return debounce(logged(
                   'Updated',
                   targetFile.replace(process.cwd(), ''),
                   writeToFile.bind(this, targetFile, rootFile, fileTypeDef),
-                  handleError);
+                  handleError), debounceDelay);
             }
           });
           break;
         case 'map':
-          handlers.push((event, path) => logged(
+          handlers.push((event, path) => debounce(logged(
             `Map ${event}:`,
             path.replace(process.cwd(), ''),
             this.buildAndWatch.bind(this, this.appMap, handleError),
             handleError
-          ));
+          )), debounceDelay);
           break;
         default:
-          handlers.push((event, path) => logged(
+          handlers.push((event, path) => debounce(logged(
             `${event} ${path.replace(process.cwd(), '')}: Recompiled`,
             output,
             compileToFile.bind({}, targetFile, Object.assign({}, options, { source: rootFile }), fileTypeDef),
             handleError
-          ));
+          )), debounceDelay);
           break;
       }
 

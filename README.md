@@ -292,5 +292,13 @@ and hidden.
 And lastly, it contains an array of sets of matching FgColors and BgColors that
 can be. For exmaple the first set is `['Black', 'White']`
 applied together. The function `getSet(i)` will return a sequential set. This
-allows mapping IDs into colors sets (so for example, all items related to `id=3` will
-have the same color).
+allows mapping IDs into colors sets (so for example, all items related to `id=3`
+will have the same color).
+
+## Throttle
+throttle(function, limit) - return a wrapper that allows `function` to be
+called only every `limit` (in milliseconds).
+
+## Debounce
+debounce(function, delay) - return a wrapper that upon called, runs the
+`function` only after `delay` (in milliseconds).
