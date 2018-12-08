@@ -48,7 +48,7 @@ describe('ductTape', () => {
       builder.onError(error => {
         assert.equal(
           ('' + error.toString()).replace(new RegExp(process.cwd(), 'g'), ''),
-          'compile-source not Found: /tests/resources/this-file-dosnt-exists.js'
+          'Error when trying loadFile /tests/resources/this-file-dosnt-exists.js (Error: Could not resolve entry (/tests/resources/this-file-dosnt-exists.js))'
         );
       });
       builder
@@ -59,15 +59,15 @@ describe('ductTape', () => {
             buildOutput
           );
         })
-        .catch(err => console.trace(err))
+        .catch(err => err)
         .then(done);
     });
 
-    it('should have errors listing names of empty bundles', done => {
+    it('should provide empty bundle names', done => {
       builder.onError(error => {
         assert.equal(
           ('' + error.toString()).replace(new RegExp(process.cwd(), 'g'), ''),
-          'compile-source not Found: /tests/resources/this-file-dosnt-exists.js'
+          'Error when trying loadFile /tests/resources/this-file-dosnt-exists.js (Error: Could not resolve entry (/tests/resources/this-file-dosnt-exists.js))'
         );
       });
       builder

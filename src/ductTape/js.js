@@ -166,7 +166,8 @@ class JS {
         content: result.code
       }))
       .catch(err => {
-        this.handleError(wrapRollUpError({ input, external }, err));
+        this.handleError(wrapRollUpError(input, err));
+
         return { files: [], content: '' };
       });
   }
@@ -183,11 +184,9 @@ class JS {
 function wrapRollUpError(input, error) {
   switch (error.code) {
     case 'PARSE_ERROR':
-      return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.toString());
+      return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.frame);
     case 'MISSING_EXPORT':
       return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.message);
-    case 'UNRESOLVED_ENTRY':
-      return new Errors.NotFound('compile-source', input.input);
     default:
       console.trace(error);
 

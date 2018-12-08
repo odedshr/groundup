@@ -103,14 +103,10 @@ describe('ductTape.javascript', () => {
 
     it('should fail to compile bad js file', done => {
       js.onError(err =>
-        assert.equal(
-          err.toString().replace(/\n/g,''),
-          "Bad Input for /Users/odedsharon/Dropbox/projects/groundup/tests/resources/file-with-error.js:2:4 (Error: Identifier 'x' has already been declared)"
-        )
+        assert.equal(err.toString(), "Error when trying loadFile ./tests/./resources/file-with-error.js (Error: Identifier \'x\' has already been declared)")
       );
       js.compile('./tests/./resources/file-with-error.js')
         .then(output => assert.equal(output.content, ''))
-        .catch(err => console.trace(JSON.stringify(err)))
         .then(done);
     });
 

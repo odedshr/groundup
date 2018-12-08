@@ -3,14 +3,12 @@ import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import { watch } from 'chokidar';
 import Errors from '../etc/Errors.js';
 import colors from '../etc/console-colors.js';
-import debounce from '../etc/debounce.js';
 import css from './css.js';
 import html from './html.js';
 import js from './js.js';
 import files from './files.js';
 
-const debounceDelay = 100,
-  defaultHandleError = error => console.error(getLogLabel('An error has occoured', `(${error.message})`, 'error'), error),
+const defaultHandleError = error => console.error(getLogLabel('An error has occoured', `(${error.message})`), error),
   mapHandler = {
     mapFile(file) {
       return [file];
@@ -29,17 +27,11 @@ const debounceDelay = 100,
     ['files', { regExp: /\/$/, id: 'files', handler: files }]
   ]);
 
-function getLogIcon (type='info') {
-  switch (type) {
-    case 'error': return `${colors.FgRed}✖${colors.Reset}`;
-    default: return `${colors.FgGreen}✓${colors.Reset}`;
-  }
-}
-function getLogLabel(verb, subject, type) {
+function getLogLabel(verb, subject) {
   const time = new Date();
 
   return `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:` +
-    `${padTwoDigits(time.getSeconds())} ${getLogIcon(type)} ` +
+    `${padTwoDigits(time.getSeconds())} ${colors.FgGreen}✓${colors.Reset} ` +
     `${colors.Dim}${verb}${colors.Reset} ${colors.FgCyan}${subject}${colors.Reset}`;
 }
 /**
@@ -329,36 +321,36 @@ class Builder {
               case 'unlink':
                 let fileToRemove = getFileToRemove(targetFile, rootFile, path);
 
-                return debounce(logged(
+                return logged(
                   'Removed',
                   fileToRemove.replace(process.cwd(), ''),
                   unlinkSync.bind(this, fileToRemove),
-                  handleError), debounceDelay);
+                  handleError);
 
               default:
-                return debounce(logged(
+                return logged(
                   'Updated',
                   targetFile.replace(process.cwd(), ''),
                   writeToFile.bind(this, targetFile, rootFile, fileTypeDef),
-                  handleError), debounceDelay);
+                  handleError);
             }
           });
           break;
         case 'map':
-          handlers.push((event, path) => debounce(logged(
+          handlers.push((event, path) => logged(
             `Map ${event}:`,
             path.replace(process.cwd(), ''),
             this.buildAndWatch.bind(this, this.appMap, handleError),
             handleError
-          )), debounceDelay);
+          ));
           break;
         default:
-          handlers.push((event, path) => debounce(logged(
+          handlers.push((event, path) => logged(
             `${event} ${path.replace(process.cwd(), '')}: Recompiled`,
             output,
             compileToFile.bind({}, targetFile, Object.assign({}, options, { source: rootFile }), fileTypeDef),
             handleError
-          )), debounceDelay);
+          ));
           break;
       }
 
