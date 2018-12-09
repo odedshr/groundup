@@ -833,44 +833,6 @@ var colors = {
   }
 };
 
-// code from https://codeburst.io/throttling-and-debouncing-in-javascript-b01cad5c8edf
-
-var debounce = (func, delay) => {
-  let inDebounce;
-
-  return function() {
-    const context = this,
-      args = arguments;
-
-    clearTimeout(inDebounce);
-    inDebounce = setTimeout(() => func.apply(context, args), delay);
-  }
-}
-
-// code from https://codeburst.io/throttling-and-debouncing-in-javascript-b01cad5c8edf
-
-var throttle = (func, limit) => {
-  let lastFunc, lastRan;
-
-  return function() {
-    const context = this,
-      args = arguments;
-
-    if (!lastRan) {
-      func.apply(context, args);
-      lastRan = Date.now();
-    } else {
-      clearTimeout(lastFunc);
-      lastFunc = setTimeout(function() {
-        if ((Date.now() - lastRan) >= limit) {
-          func.apply(context, args);
-          lastRan = Date.now();
-        }
-      }, limit - (Date.now() - lastRan));
-    }
-  }
-}
-
-var index = { colors, debounce, Errors, HtmlCompiler: HTMLCompiler, DOMinion, throttle };
+var index = { colors, Errors, HtmlCompiler: HTMLCompiler, DOMinion };
 
 export default index;

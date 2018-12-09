@@ -220,20 +220,6 @@ var colors = {
   }
 };
 
-// code from https://codeburst.io/throttling-and-debouncing-in-javascript-b01cad5c8edf
-
-var debounce = (func, delay) => {
-  let inDebounce;
-
-  return function() {
-    const context = this,
-      args = arguments;
-
-    clearTimeout(inDebounce);
-    inDebounce = setTimeout(() => func.apply(context, args), delay);
-  }
-}
-
 class Mapper {
   constructor() {
     this.handleError = error => {
@@ -689,7 +675,8 @@ class JS {
         content: result.code
       }))
       .catch(err => {
-        this.handleError(wrapRollUpError({ input, external }, err));
+        this.handleError(wrapRollUpError(input, err));
+
         return { files: [], content: '' };
       });
   }
@@ -706,11 +693,9 @@ class JS {
 function wrapRollUpError(input, error) {
   switch (error.code) {
     case 'PARSE_ERROR':
-      return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.toString());
+      return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.frame);
     case 'MISSING_EXPORT':
       return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.message);
-    case 'UNRESOLVED_ENTRY':
-      return new Errors.NotFound('compile-source', input.input);
     default:
       console.trace(error);
 
@@ -877,8 +862,7 @@ var files = {
   }
 };
 
-const debounceDelay = 100,
-  defaultHandleError = error => console.error(getLogLabel$1('An error has occoured', `(${error.message})`, 'error'), error),
+const defaultHandleError = error => console.error(getLogLabel$1('An error has occoured', `(${error.message})`), error),
   mapHandler = {
     mapFile(file) {
       return [file];
@@ -897,17 +881,11 @@ const debounceDelay = 100,
     ['files', { regExp: /\/$/, id: 'files', handler: files }]
   ]);
 
-function getLogIcon (type='info') {
-  switch (type) {
-    case 'error': return `${colors.FgRed}✖${colors.Reset}`;
-    default: return `${colors.FgGreen}✓${colors.Reset}`;
-  }
-}
-function getLogLabel$1(verb, subject, type) {
+function getLogLabel$1(verb, subject) {
   const time = new Date();
 
   return `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:` +
-    `${padTwoDigits(time.getSeconds())} ${getLogIcon(type)} ` +
+    `${padTwoDigits(time.getSeconds())} ${colors.FgGreen}✓${colors.Reset} ` +
     `${colors.Dim}${verb}${colors.Reset} ${colors.FgCyan}${subject}${colors.Reset}`;
 }
 /**
@@ -1197,36 +1175,36 @@ class Builder {
               case 'unlink':
                 let fileToRemove = getFileToRemove(targetFile, rootFile, path);
 
-                return debounce(logged(
+                return logged(
                   'Removed',
                   fileToRemove.replace(process.cwd(), ''),
                   fs.unlinkSync.bind(this, fileToRemove),
-                  handleError), debounceDelay);
+                  handleError);
 
               default:
-                return debounce(logged(
+                return logged(
                   'Updated',
                   targetFile.replace(process.cwd(), ''),
                   writeToFile.bind(this, targetFile, rootFile, fileTypeDef),
-                  handleError), debounceDelay);
+                  handleError);
             }
           });
           break;
         case 'map':
-          handlers.push((event, path) => debounce(logged(
+          handlers.push((event, path) => logged(
             `Map ${event}:`,
             path.replace(process.cwd(), ''),
             this.buildAndWatch.bind(this, this.appMap, handleError),
             handleError
-          )), debounceDelay);
+          ));
           break;
         default:
-          handlers.push((event, path) => debounce(logged(
+          handlers.push((event, path) => logged(
             `${event} ${path.replace(process.cwd(), '')}: Recompiled`,
             output,
             compileToFile.bind({}, targetFile, Object.assign({}, options, { source: rootFile }), fileTypeDef),
             handleError
-          )), debounceDelay);
+          ));
           break;
       }
 
