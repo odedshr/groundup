@@ -104,7 +104,7 @@ describe('ductTape.javascript', () => {
     it('should fail to compile bad js file', done => {
       js.onError(err => {
         assert.equal(err.toString().replace(/\n/g,'').replace(new RegExp(process.cwd(), 'g'),''),
-          "Bad Input for /Users/odedsharon/Dropbox/projects/groundup/tests/resources/file-with-error.js:2:4 (1: let x = '1';2: let x = '2';       ^)"
+          "Bad Input for /tests/resources/file-with-error.js:2:4 (1: let x = \'1\';2: let x = \'2\';       ^)"
           )
         });
       js.compile('./tests/./resources/file-with-error.js')
