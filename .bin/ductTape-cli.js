@@ -4,6 +4,7 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var fs = require('fs');
 var fs__default = _interopDefault(fs);
+var chokidar = require('chokidar');
 var less = require('less');
 var LessPluginAutoPrefix = _interopDefault(require('less-plugin-autoprefix'));
 var CleanCSS = _interopDefault(require('clean-css'));
@@ -12,7 +13,6 @@ var rollup = _interopDefault(require('rollup'));
 var babel = _interopDefault(require('babel-core'));
 var UglifyJS = _interopDefault(require('uglify-js'));
 var glob = _interopDefault(require('glob'));
-var chokidar = require('chokidar');
 
 class DetailedError extends Error {
   constructor(message, status, details, stack) {
