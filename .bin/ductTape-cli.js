@@ -356,8 +356,8 @@ class CSS {
    * Returns a promise for a merged, transpiled and minified version of a scss file
    * @param {String} fileName of scss file
    */
-  compile(fileName) {
-    return this.loadFile(fileName)
+  async compile(fileName) {
+    return this.loadFile(fileName.source || fileName)
       .then(fileSet => {
         if (fileSet.content.length === 0) {
           return fileSet;
@@ -441,8 +441,8 @@ class HTML {
    * Returns a promise for a merged and minified version of a html file
    * @param {String} fileName of scss file
    */
-  compile(fileName) {
-    return this.loadFile(fileName).then(fileSet => {
+  async compile(fileName) {
+    return this.loadFile(fileName.source || fileName).then(fileSet => {
       if (fileSet.content.length === 0) {
         return fileSet;
       }
@@ -541,7 +541,7 @@ class JS {
    * - @param {String} format - amd, cjs, es, iife, umd
    * - @param {String} external - single string file name, or array of string of files that not part of the bundle
    */
-  compile(options) {
+  async compile(options) {
     let filenames,
       external = this.getExternalsFromPackageJson(),
       globals = {},

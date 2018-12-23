@@ -32,7 +32,7 @@ class JS {
    * - @param {String} format - amd, cjs, es, iife, umd
    * - @param {String} external - single string file name, or array of string of files that not part of the bundle
    */
-  compile(options) {
+  async compile(options) {
     let filenames,
       external = this.getExternalsFromPackageJson(),
       globals = {},

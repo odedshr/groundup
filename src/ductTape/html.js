@@ -15,8 +15,8 @@ class HTML {
    * Returns a promise for a merged and minified version of a html file
    * @param {String} fileName of scss file
    */
-  compile(fileName) {
-    return this.loadFile(fileName).then(fileSet => {
+  async compile(fileName) {
+    return this.loadFile(fileName.source || fileName).then(fileSet => {
       if (fileSet.content.length === 0) {
         return fileSet;
       }

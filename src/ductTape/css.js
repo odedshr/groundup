@@ -17,8 +17,8 @@ class CSS {
    * Returns a promise for a merged, transpiled and minified version of a scss file
    * @param {String} fileName of scss file
    */
-  compile(fileName) {
-    return this.loadFile(fileName)
+  async compile(fileName) {
+    return this.loadFile(fileName.source || fileName)
       .then(fileSet => {
         if (fileSet.content.length === 0) {
           return fileSet;
