@@ -103,7 +103,7 @@ describe('ductTape.css', () => {
         .then(css =>
           assert.equal(
             css,
-            ':-ms-input-placeholder {\n  color: gray;\n}\n::placeholder {\n  color: gray;\n}\n'
+            '::-webkit-input-placeholder {\n  color: gray;\n}\n::-ms-input-placeholder {\n  color: gray;\n}\n::placeholder {\n  color: gray;\n}\n'
           )
         )
         .catch(err => console.error(err))

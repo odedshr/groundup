@@ -3,7 +3,7 @@
     "source": "tests/resources",
     "target": "tests/dist",
     "entries": {
-      "webWorker.js": ["this-file-dosnt-exists.js"]
+      "webWorker.js": ["creating-empty-bundle.js"]
     }
   }
 }

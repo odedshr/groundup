@@ -25,12 +25,11 @@ describe('ductTape.javascript', () => {
     it('should get js file content with its imports embeded', done => {
       js.loadFile('./tests/resources/file1.js')
         .then(output => {
-          assert.equal(output.files.length, 2);
-          assert.equal(
-            output.files[1].replace(process.cwd(), '.'),
-            './tests/resources/file1.js'
-          );
+          const files = Object.keys(output.files);
+          assert.equal(files.length, 2);
+          assert.equal(files[1].replace(process.cwd(), '.'), './tests/resources/file1.js');
         })
+        .catch(console.error)
         .then(done);
     });
   });
@@ -97,6 +96,18 @@ describe('ductTape.javascript', () => {
         .then(output => assert.equal(
           output.content,
           '"use strict";Object.defineProperty(exports,"__esModule",{value:!0});var foo=2,bar=3;function test(){console.log(foo+bar)}var file1_1=Object.freeze({test:test});exports.child=file1_1;'
+        ))
+        .then(done);
+    });
+
+    it('should compile, without minifying the file', done => {
+      js.compile({ 
+        source: './tests/./resources/file1.js', 
+        minify: false
+      })
+        .then(output => assert.equal(
+          output.content,
+          '\'use strict\';\n\nObject.defineProperty(exports, \'__esModule\', { value: true });\n\nvar foo = 2,\n    bar = 3;\n\nfunction test() {\n    console.log(foo + bar);\n}\n\nvar file1_1 = /*#__PURE__*/Object.freeze({\n    test: test\n});\n\nexports.child = file1_1;'
         ))
         .then(done);
     });

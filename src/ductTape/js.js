@@ -36,7 +36,8 @@ class JS {
     let filenames,
       external = this.getExternalsFromPackageJson(),
       globals = {},
-      format = defaultFormat;
+      format = defaultFormat,
+      minify = options.minify !== false ? this.minify : code => code;
 
     if (options instanceof Object) {
       if (Array.isArray(options)) {
@@ -62,7 +63,7 @@ class JS {
           }
 
           return this.transpile(fileSet.content)
-            .then(this.minify)
+            .then(minify)
             .then(transpiledAndUglified => {
               fileSet.content = transpiledAndUglified;
 
@@ -136,7 +137,7 @@ class JS {
    * @param {String} format of output files (default is 'cjs')
    */
 
-  loadFiles(input, format = defaultFormat, external = [], globals = {}) {
+  async loadFiles(input, format = defaultFormat, external = [], globals = {}) {
     return Promise.all(
       input.map(file => this.loadFile(file, format, external, globals))
     ).then(res =>
@@ -157,7 +158,7 @@ class JS {
    * @param {String} input filename
    * @param {String} format of output files (default is 'cjs')*
    */
-  loadFile(input, format = defaultFormat, external = [], globals = {}) {
+  async loadFile(input, format = defaultFormat, external = [], globals = {}) {
     return rollup
       .rollup({ input, external })
       .then(bundle => bundle.generate({ format, globals }))

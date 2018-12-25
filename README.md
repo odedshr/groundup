@@ -53,7 +53,8 @@ The application map is the set of instructions for the builder:
       "main.js": {
         "source": ["file1.js", "tools.js"],
         "format": "es",
-        "external": "vue.js"
+        "external": "vue.js",
+        "minify": false
       },
       "main.css": ["file1.less", "file2.less"],
       "webWorker.js": ["web-worker.js", "tools.js"],
@@ -69,6 +70,7 @@ The application map is the set of instructions for the builder:
     `format` (amd, cjs, es, iife, umd), `external` (array of files that will not be bundled) and source (string or array of strings as before)
   - entry name "*" means that whenever the source file changes, buildAndWatch() will initiate automatically, as the map has changed
   - `external` (which are not bundled as they're a part of `node_modules`) are also automatically read from the current folder's `package.json`
+  - `minify` (default `true`) when set to `false` the js file will not be minified
 - The `package.json` is a valid file to place the `ductTape` property and maintain all the application infromation in a single file
 
 ## ductTape

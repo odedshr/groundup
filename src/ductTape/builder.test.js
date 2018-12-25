@@ -26,29 +26,27 @@ describe('ductTape', () => {
   })
 
   describe('build()', () => {
-    it('should build a dist', done => {
-      builder
-        .build(appMap)
-        .then(() => {
-          assert.equal(
-            JSON.stringify(fs.readdirSync(appMap.target)),
-            buildOutput
-          );
-        })
-        .catch(err => err)
-        .then(done);
-    });
+    it('should build a dist', () => builder
+      .build(appMap)
+      .then(() => {
+        assert.equal(
+          JSON.stringify(fs.readdirSync(appMap.target)),
+          buildOutput
+        );
+      })
+      .catch(err => err)
+    );
 
     it('should ignore a missing file in map', done => {
       const appMap = JSON.parse(
         fs.readFileSync(appMapFile, 'utf-8')
       ).ductTape;
 
-      appMap.entries['main.js'].source.push('this-file-dosnt-exists.js');
+      appMap.entries['main.js'].source.push('missing-file-to-be-ignored.js');
       builder.onError(error => {
         assert.equal(
           ('' + error.toString()).replace(new RegExp(process.cwd(), 'g'), ''),
-          'ductTape.js.loadFile /tests/resources/this-file-dosnt-exists.js'
+          'ductTape.js.loadFile /tests/resources/missing-file-to-be-ignored.js'
         );
       });
       builder
@@ -67,7 +65,7 @@ describe('ductTape', () => {
       builder.onError(error => {
         assert.equal(
           ('' + error.toString()).replace(new RegExp(process.cwd(), 'g'), ''),
-          'ductTape.js.loadFile /tests/resources/this-file-dosnt-exists.js'
+          'ductTape.js.loadFile /tests/resources/creating-empty-bundle.js'
         );
       });
       builder
