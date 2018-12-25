@@ -62,5 +62,5 @@
     "prepare": "node ./scripts/prepare-groundup.js",
     "test": "./node_modules/mocha/bin/mocha src/**/*.test.js --exit"
   },
-  "version": "2.1.4"
+  "version": "2.5.0"
 }
