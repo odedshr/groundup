@@ -522,15 +522,25 @@ function getLogLabel(verb, subject) {
   const time = new Date(),
     padTwoDigits = num => ('00' + num).slice(-2);
 
-  return `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:` +
+  return (
+    `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:` +
     `${padTwoDigits(time.getSeconds())} ${colors.FgRed}✖${colors.Reset} ` +
-    `${colors.Dim}${verb}${colors.Reset} ${colors.FgCyan}${subject}${colors.Reset}`;
+    `${colors.Dim}${verb}${colors.Reset} ${colors.FgCyan}${subject}${
+      colors.Reset
+    }`
+  );
 }
 
 class JS {
   constructor() {
     this.handleError = error =>
-      console.error(getLogLabel('ductTape.js: An error has occoured', `(${error.message}):`), error.toString());
+      console.error(
+        getLogLabel(
+          'ductTape.js: An error has occoured',
+          `(${error.message}):`
+        ),
+        error.toString()
+      );
   }
 
   /**
@@ -564,31 +574,41 @@ class JS {
       filenames = [options];
     }
 
-    return this.loadFiles(filenames, format, external, globals)
-      .then(
-        fileSet => {
-          if (fileSet.content.length === 0) {
-            return fileSet;
-          }
-
-          return this.transpile(fileSet.content)
-            .then(minify)
-            .then(transpiledAndUglified => {
-              fileSet.content = transpiledAndUglified;
-
-              return fileSet;
-            })
-            .catch(err => {
-              if (err.codeFrame) {
-                this.handleError(new Errors.BadInput(JSON.stringify(filenames), err.codeFrame, err));
-              } else {
-                this.handleError(new Errors.Custom('ductTape.js.transpile', JSON.stringify(filenames), err));
-              }
-
-              return fileSet;
-            });
+    return this.loadFiles(filenames, format, external, globals).then(
+      fileSet => {
+        if (fileSet.content.length === 0) {
+          return fileSet;
         }
-      );
+
+        return this.transpile(fileSet.content)
+          .then(minify)
+          .then(transpiledAndUglified => {
+            fileSet.content = transpiledAndUglified;
+            return fileSet;
+          })
+          .catch(err => {
+            if (err.codeFrame) {
+              this.handleError(
+                new Errors.BadInput(
+                  JSON.stringify(filenames),
+                  err.codeFrame,
+                  err
+                )
+              );
+            } else {
+              this.handleError(
+                new Errors.Custom(
+                  'ductTape.js.transpile',
+                  JSON.stringify(filenames),
+                  err
+                )
+              );
+            }
+
+            return fileSet;
+          });
+      }
+    );
   }
 
   /**
@@ -597,16 +617,21 @@ class JS {
    */
   getExternalsFromPackageJson() {
     if (fs__default.existsSync('./package.json')) {
-      const packageJson = JSON.parse(fs__default.readFileSync('./package.json', 'utf-8'));
+      const packageJson = JSON.parse(
+        fs__default.readFileSync('./package.json', 'utf-8')
+      );
 
-      return [...Object.keys(packageJson.dependencies  || {}), ...Object.keys(packageJson.devDependencies || {})];
+      return [
+        ...Object.keys(packageJson.dependencies || {}),
+        ...Object.keys(packageJson.devDependencies || {})
+      ];
     }
 
     return [];
   }
 
   getArray(item) {
-    return Array.isArray(item)  ? [...item] : [item];
+    return Array.isArray(item) ? [...item] : [item];
   }
 
   /**
@@ -671,13 +696,13 @@ class JS {
     return rollup
       .rollup({ input, external })
       .then(bundle => bundle.generate({ format, globals }))
+      .then(res => res.output[0])
       .then(result => ({
         files: result.modules,
         content: result.code
       }))
       .catch(err => {
         this.handleError(wrapRollUpError(input, err));
-
         return { files: [], content: '' };
       });
   }
@@ -694,9 +719,15 @@ class JS {
 function wrapRollUpError(input, error) {
   switch (error.code) {
     case 'PARSE_ERROR':
-      return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.frame);
+      return new Errors.BadInput(
+        `${error.loc.file}:${error.loc.line}:${error.loc.column}`,
+        error.frame
+      );
     case 'MISSING_EXPORT':
-      return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.message);
+      return new Errors.BadInput(
+        `${error.loc.file}:${error.loc.line}:${error.loc.column}`,
+        error.message
+      );
     default:
       console.trace(error);
 
@@ -1142,16 +1173,16 @@ class Builder {
  * @param {Function} mapFunc which parse the files to look for dependencies
  * @param {String} target folder
  */
-  _getEntryWatchers(output, files$$1, mapFunc, target, handleError) {
+  _getEntryWatchers(output, files, mapFunc, target, handleError) {
     let options, external;
 
-    if (files$$1.source) {
-      options = files$$1;
+    if (files.source) {
+      options = files;
       external = options.external;
-      files$$1 = files$$1.source;
+      files = files.source;
     }
 
-    return files$$1.map(entry =>
+    return files.map(entry =>
       this._getWatchers(entry, mapFunc(entry, external), output, target, options, handleError)
     );
   }
@@ -1162,10 +1193,10 @@ class Builder {
    * @param {String} output file name
    * @param {String} target path
    */
-  _getWatchers(rootFile, files$$1, output, target, options = {}, handleError) {
+  _getWatchers(rootFile, files, output, target, options = {}, handleError) {
     const targetFile = this._getAbsolutePath(target, output);
 
-    return files$$1.map(file => {
+    return files.map(file => {
       const fileTypeDef = getFileType(output),
         handlers = [];
 

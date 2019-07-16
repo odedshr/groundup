@@ -13,15 +13,25 @@ function getLogLabel(verb, subject) {
   const time = new Date(),
     padTwoDigits = num => ('00' + num).slice(-2);
 
-  return `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:` +
+  return (
+    `${padTwoDigits(time.getHours())}:${padTwoDigits(time.getMinutes())}:` +
     `${padTwoDigits(time.getSeconds())} ${colors.FgRed}✖${colors.Reset} ` +
-    `${colors.Dim}${verb}${colors.Reset} ${colors.FgCyan}${subject}${colors.Reset}`;
+    `${colors.Dim}${verb}${colors.Reset} ${colors.FgCyan}${subject}${
+      colors.Reset
+    }`
+  );
 }
 
 class JS {
   constructor() {
     this.handleError = error =>
-      console.error(getLogLabel('ductTape.js: An error has occoured', `(${error.message}):`), error.toString());
+      console.error(
+        getLogLabel(
+          'ductTape.js: An error has occoured',
+          `(${error.message}):`
+        ),
+        error.toString()
+      );
   }
 
   /**
@@ -55,31 +65,41 @@ class JS {
       filenames = [options];
     }
 
-    return this.loadFiles(filenames, format, external, globals)
-      .then(
-        fileSet => {
-          if (fileSet.content.length === 0) {
-            return fileSet;
-          }
-
-          return this.transpile(fileSet.content)
-            .then(minify)
-            .then(transpiledAndUglified => {
-              fileSet.content = transpiledAndUglified;
-
-              return fileSet;
-            })
-            .catch(err => {
-              if (err.codeFrame) {
-                this.handleError(new Errors.BadInput(JSON.stringify(filenames), err.codeFrame, err));
-              } else {
-                this.handleError(new Errors.Custom('ductTape.js.transpile', JSON.stringify(filenames), err));
-              }
-
-              return fileSet;
-            });
+    return this.loadFiles(filenames, format, external, globals).then(
+      fileSet => {
+        if (fileSet.content.length === 0) {
+          return fileSet;
         }
-      );
+
+        return this.transpile(fileSet.content)
+          .then(minify)
+          .then(transpiledAndUglified => {
+            fileSet.content = transpiledAndUglified;
+            return fileSet;
+          })
+          .catch(err => {
+            if (err.codeFrame) {
+              this.handleError(
+                new Errors.BadInput(
+                  JSON.stringify(filenames),
+                  err.codeFrame,
+                  err
+                )
+              );
+            } else {
+              this.handleError(
+                new Errors.Custom(
+                  'ductTape.js.transpile',
+                  JSON.stringify(filenames),
+                  err
+                )
+              );
+            }
+
+            return fileSet;
+          });
+      }
+    );
   }
 
   /**
@@ -88,16 +108,21 @@ class JS {
    */
   getExternalsFromPackageJson() {
     if (fs.existsSync('./package.json')) {
-      const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
+      const packageJson = JSON.parse(
+        fs.readFileSync('./package.json', 'utf-8')
+      );
 
-      return [...Object.keys(packageJson.dependencies  || {}), ...Object.keys(packageJson.devDependencies || {})];
+      return [
+        ...Object.keys(packageJson.dependencies || {}),
+        ...Object.keys(packageJson.devDependencies || {})
+      ];
     }
 
     return [];
   }
 
   getArray(item) {
-    return Array.isArray(item)  ? [...item] : [item];
+    return Array.isArray(item) ? [...item] : [item];
   }
 
   /**
@@ -162,13 +187,13 @@ class JS {
     return rollup
       .rollup({ input, external })
       .then(bundle => bundle.generate({ format, globals }))
+      .then(res => res.output[0])
       .then(result => ({
         files: result.modules,
         content: result.code
       }))
       .catch(err => {
         this.handleError(wrapRollUpError(input, err));
-
         return { files: [], content: '' };
       });
   }
@@ -185,9 +210,15 @@ class JS {
 function wrapRollUpError(input, error) {
   switch (error.code) {
     case 'PARSE_ERROR':
-      return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.frame);
+      return new Errors.BadInput(
+        `${error.loc.file}:${error.loc.line}:${error.loc.column}`,
+        error.frame
+      );
     case 'MISSING_EXPORT':
-      return new Errors.BadInput(`${error.loc.file}:${error.loc.line}:${error.loc.column}`, error.message);
+      return new Errors.BadInput(
+        `${error.loc.file}:${error.loc.line}:${error.loc.column}`,
+        error.message
+      );
     default:
       console.trace(error);
 
